@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Nightbound Survivor</title>
+  <link rel="stylesheet" href="./src/styles.css">
+</head>
+<body>
+  <main id="game" aria-label="Nightbound Survivor game">
+    <canvas id="canvas"></canvas>
+
+    <section class="hud" aria-live="polite">
+      <div class="bars">
+        <div class="bar-row">
+          <strong>HP</strong>
+          <div class="meter"><div id="hpFill" class="fill hp"></div></div>
+          <span id="hpText">100/100</span>
+        </div>
+        <div class="bar-row">
+          <strong>XP</strong>
+          <div class="meter"><div id="xpFill" class="fill xp"></div></div>
+          <span id="xpText">0/10</span>
+        </div>
+      </div>
+
+      <div class="stats">
+        <span id="timeText" class="pill">00:00</span>
+        <span id="levelText" class="pill">Level 1</span>
+        <span id="killsText" class="pill">0 KOs</span>
+        <span id="waveText" class="pill">Wave 1</span>
+      </div>
+
+      <div class="weapons" id="weaponList"></div>
+    </section>
+
+    <div class="help">Move with WASD, arrows, or drag on touch. Weapons fire automatically. P pauses.</div>
+    <div id="pauseBadge" class="pause-badge hidden">Paused</div>
+
+    <section id="startOverlay" class="overlay start-overlay">
+      <div class="menu-panel">
+        <div class="title-block">
+          <h1>Nightbound Survivor</h1>
+          <p class="subtitle">Survive the midnight swarm, collect shards, and build a ridiculous auto-attacking loadout before the horde overwhelms you.</p>
+        </div>
+        <div class="button-row">
+          <button id="startBtn">Start Run</button>
+          <button id="debugBtn" class="secondary">Toggle Debug</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="levelOverlay" class="overlay hidden">
+      <div class="center-stack">
+        <h2>Choose an Upgrade</h2>
+        <div id="upgradeGrid" class="upgrade-grid"></div>
+      </div>
+    </section>
+
+    <section id="gameOverOverlay" class="overlay hidden">
+      <div class="menu-panel">
+        <div class="title-block">
+          <h2>Run Ended</h2>
+          <p id="runSummary" class="subtitle">You lasted 00:00.</p>
+        </div>
+        <div class="button-row">
+          <button id="restartBtn">Restart</button>
+          <button id="menuBtn" class="secondary">Main Menu</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script defer src="./src/math.js"></script>
+  <script defer src="./src/state.js"></script>
+  <script defer src="./src/assets.js"></script>
+  <script defer src="./src/input.js"></script>
+  <script defer src="./src/simulation.js"></script>
+  <script defer src="./src/renderer.js"></script>
+  <script defer src="./src/ui.js"></script>
+  <script defer src="./src/main.js"></script>
+</body>
+</html>
