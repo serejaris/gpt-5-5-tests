@@ -36,7 +36,7 @@
 
   const endRun = () => {
     game.mode = "gameover";
-    ui.showGameOver();
+    ui.showGameOver(Simulation.getRunStats(game));
   };
 
   const showLevelUp = () => {
@@ -67,6 +67,15 @@
     setMenu,
     chooseUpgrade,
     togglePause,
+    submitScore: async (name, runStats) => {
+      if (game.scoreSubmitted) throw new Error("Этот результат уже сохранен.");
+      const result = await window.Nightbound.Leaderboard.submitScore({
+        name,
+        ...runStats
+      });
+      game.scoreSubmitted = true;
+      return result;
+    },
     toggleDebug: () => {
       game.debug = !game.debug;
     },
@@ -83,6 +92,7 @@
   input = createInput(canvas, actions);
   renderer = createRenderer(canvas, game, input.state, assets);
   ui.updateHud(true);
+  ui.refreshLeaderboards();
 
   const frame = (now) => {
     const rawDt = game.lastFrame ? (now - game.lastFrame) / 1000 : 0;

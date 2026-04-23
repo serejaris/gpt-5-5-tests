@@ -278,7 +278,7 @@
     for (const g of game.gems) {
       if (distSq(g.x, g.y, p.x, p.y) < (g.r + p.r + 7) ** 2) {
         addXp(game, g.value);
-        addFloater(game, p.x, p.y - 34, `+${g.value} xp`, "#63d7ff");
+        addFloater(game, p.x, p.y - 34, `+${g.value} ctx`, "#63d7ff");
       } else {
         remaining.push(g);
       }
@@ -302,9 +302,9 @@
     const w = game.weapons;
     const options = [
       {
-        name: "Arc Bolt",
-        tag: "Weapon",
-        desc: "Bolts hit harder and recharge a little faster.",
+        name: "GPT-разряд",
+        tag: "Модель",
+        desc: "Мьютон выпускает более точные токен-разряды с меньшей задержкой.",
         apply: () => {
           w.bolt.level += 1;
           w.bolt.damage += 8;
@@ -312,9 +312,9 @@
         }
       },
       {
-        name: "Split Casting",
-        tag: "Weapon",
-        desc: "Fire one extra bolt per volley.",
+        name: "Параллельный inference",
+        tag: "Модель",
+        desc: "Добавляет еще один одновременный запрос в залпе.",
         apply: () => {
           w.bolt.level += 1;
           w.bolt.count += 1;
@@ -322,9 +322,9 @@
         }
       },
       {
-        name: "Pulse Ward",
-        tag: "Aura",
-        desc: "Your close-range pulse deals more damage.",
+        name: "RAG-щит",
+        tag: "Контекст",
+        desc: "Ближний контекстный импульс сильнее чистит галлюцинации.",
         apply: () => {
           w.pulse.level += 1;
           w.pulse.damage += 6;
@@ -332,18 +332,18 @@
         }
       },
       {
-        name: "Wider Ward",
-        tag: "Aura",
-        desc: "Increase pulse radius and keep the swarm away.",
+        name: "Длинное окно",
+        tag: "Контекст",
+        desc: "Расширяет радиус контекстного окна вокруг Мьютона.",
         apply: () => {
           w.pulse.level += 1;
           w.pulse.radius += 24;
         }
       },
       {
-        name: w.blade.count ? "More Blades" : "Orbit Blade",
-        tag: "Weapon",
-        desc: w.blade.count ? "Add another spinning blade around you." : "Gain a spinning blade that damages nearby enemies.",
+        name: w.blade.count ? "Сабагент" : "Оркестратор",
+        tag: "Агент",
+        desc: w.blade.count ? "Добавляет еще одного автономного сабагента на орбиту." : "Запускает агента-оркестратора, который режет ближайшие задачи.",
         apply: () => {
           w.blade.level += 1;
           w.blade.count = Math.min(8, w.blade.count + 1);
@@ -352,25 +352,25 @@
         }
       },
       {
-        name: "Fleet Boots",
-        tag: "Core",
-        desc: "Move faster and kite denser waves.",
+        name: "Быстрый роутинг",
+        tag: "Ядро",
+        desc: "Мьютон быстрее уходит от шумных задач и плохих промптов.",
         apply: () => {
           p.speed += 22;
         }
       },
       {
-        name: "Deep Pockets",
-        tag: "Core",
-        desc: "Pull shards from farther away.",
+        name: "Контекстный магнит",
+        tag: "Ядро",
+        desc: "Подтягивает полезный контекст с большего расстояния.",
         apply: () => {
           p.magnet += 34;
         }
       },
       {
-        name: "Blood Vial",
-        tag: "Core",
-        desc: "Increase max health and restore some HP.",
+        name: "Human-in-the-loop",
+        tag: "Ядро",
+        desc: "Увеличивает запас фокуса и восстанавливает часть состояния.",
         apply: () => {
           p.maxHp += 24;
           p.hp = Math.min(p.maxHp, p.hp + 38);
@@ -392,6 +392,25 @@
     upgrade.apply();
     burstParticles(game, game.player.x, game.player.y, "#63d7ff", 26);
     return true;
+  };
+
+  const getRunStats = (game) => {
+    const survivedSeconds = Math.floor(game.elapsed);
+    const wave = currentWave(game);
+    const score = Math.floor(
+      survivedSeconds * 12 +
+      game.player.kills * 95 +
+      game.player.level * 260 +
+      wave * 140
+    );
+
+    return {
+      score,
+      survivedSeconds,
+      kills: game.player.kills,
+      level: game.player.level,
+      wave
+    };
   };
 
   const burstParticles = (game, x, y, color, count) => {
@@ -481,6 +500,7 @@
     update,
     currentWave,
     rollUpgrades,
-    chooseUpgrade
+    chooseUpgrade,
+    getRunStats
   };
 })();

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ramp Bucket Physics</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="simulation" aria-label="Ball ramp and bucket simulation">
+      <canvas id="scene" width="1100" height="640"></canvas>
+      <div class="status-strip" aria-live="polite">
+        <span id="run-state">Ready</span>
+        <strong id="bucket-result">No bucket yet</strong>
+      </div>
+    </section>
+
+    <aside class="control-panel" aria-label="Simulation controls">
+      <div>
+        <p class="eyebrow">Matter.js physics</p>
+        <h1>Ramp to three buckets</h1>
+      </div>
+
+      <label class="angle-control" for="angle">
+        <span>
+          Ramp angle
+          <strong><output id="angle-output" for="angle">24</output>deg</strong>
+        </span>
+        <input id="angle" type="range" min="8" max="42" value="24" step="1" />
+      </label>
+
+      <div class="button-row">
+        <button id="release" type="button">Release ball</button>
+        <button id="reset" class="secondary" type="button">Reset</button>
+      </div>
+
+      <dl class="readout">
+        <div>
+          <dt>Speed</dt>
+          <dd id="speed">0.0 m/s</dd>
+        </div>
+        <div>
+          <dt>Score</dt>
+          <dd id="score">0 / 0 / 0</dd>
+        </div>
+      </dl>
+    </aside>
+  </main>
+</body>
+</html>

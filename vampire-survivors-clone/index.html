@@ -1,24 +1,24 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Nightbound Survivor</title>
-  <link rel="stylesheet" href="./src/styles.css">
+  <title>Мьютон: Агентный Ран</title>
+  <link rel="stylesheet" href="./src/styles.css?v=4">
 </head>
 <body>
-  <main id="game" aria-label="Nightbound Survivor game">
+  <main id="game" aria-label="Игра Мьютон: Агентный Ран">
     <canvas id="canvas"></canvas>
 
     <section class="hud" aria-live="polite">
       <div class="bars">
         <div class="bar-row">
-          <strong>HP</strong>
+          <strong>Фокус</strong>
           <div class="meter"><div id="hpFill" class="fill hp"></div></div>
           <span id="hpText">100/100</span>
         </div>
         <div class="bar-row">
-          <strong>XP</strong>
+          <strong>CTX</strong>
           <div class="meter"><div id="xpFill" class="fill xp"></div></div>
           <span id="xpText">0/10</span>
         </div>
@@ -26,33 +26,39 @@
 
       <div class="stats">
         <span id="timeText" class="pill">00:00</span>
-        <span id="levelText" class="pill">Level 1</span>
-        <span id="killsText" class="pill">0 KOs</span>
-        <span id="waveText" class="pill">Wave 1</span>
+        <span id="levelText" class="pill">Ур. 1</span>
+        <span id="killsText" class="pill">0 сбоев</span>
+        <span id="waveText" class="pill">Волна 1</span>
       </div>
 
       <div class="weapons" id="weaponList"></div>
     </section>
 
-    <div class="help">Move with WASD, arrows, or drag on touch. Weapons fire automatically. P pauses.</div>
-    <div id="pauseBadge" class="pause-badge hidden">Paused</div>
+    <div class="help">Движение: WASD, стрелки или свайп. Модели и агенты атакуют автоматически. P — пауза.</div>
+    <div id="pauseBadge" class="pause-badge hidden">Пауза</div>
 
     <section id="startOverlay" class="overlay start-overlay">
       <div class="menu-panel">
         <div class="title-block">
-          <h1>Nightbound Survivor</h1>
-          <p class="subtitle">Survive the midnight swarm, collect shards, and build a ridiculous auto-attacking loadout before the horde overwhelms you.</p>
+          <h1>Мьютон: Агентный Ран</h1>
+          <p class="subtitle">Мьютон застрял в песочнице агентов: собирай контекст, запускай модели, отбивайся от галлюцинаций и держи фокус как можно дольше.</p>
+        </div>
+        <div class="leaderboard-panel">
+          <div class="panel-title">Таблица лидеров</div>
+          <ol id="menuLeaderboard" class="leaderboard-list">
+            <li>Загрузка...</li>
+          </ol>
         </div>
         <div class="button-row">
-          <button id="startBtn">Start Run</button>
-          <button id="debugBtn" class="secondary">Toggle Debug</button>
+          <button id="startBtn">Начать ран</button>
+          <button id="debugBtn" class="secondary">Debug</button>
         </div>
       </div>
     </section>
 
     <section id="levelOverlay" class="overlay hidden">
       <div class="center-stack">
-        <h2>Choose an Upgrade</h2>
+        <h2>Выбери апгрейд</h2>
         <div id="upgradeGrid" class="upgrade-grid"></div>
       </div>
     </section>
@@ -60,24 +66,40 @@
     <section id="gameOverOverlay" class="overlay hidden">
       <div class="menu-panel">
         <div class="title-block">
-          <h2>Run Ended</h2>
-          <p id="runSummary" class="subtitle">You lasted 00:00.</p>
+          <h2>Ран завершен</h2>
+          <p id="runSummary" class="subtitle">Мьютон продержался 00:00.</p>
+          <p id="scoreText" class="score-line">Счет: 0</p>
+        </div>
+        <form id="scoreForm" class="score-form">
+          <label for="playerName">Имя для рейтинга</label>
+          <div class="score-input-row">
+            <input id="playerName" name="playerName" maxlength="24" autocomplete="nickname" placeholder="Например: Ris" required>
+            <button id="submitScoreBtn" type="submit">Сохранить</button>
+          </div>
+          <p id="scoreStatus" class="form-status" aria-live="polite"></p>
+        </form>
+        <div class="leaderboard-panel">
+          <div class="panel-title">Лучшие раны</div>
+          <ol id="gameOverLeaderboard" class="leaderboard-list">
+            <li>Загрузка...</li>
+          </ol>
         </div>
         <div class="button-row">
-          <button id="restartBtn">Restart</button>
-          <button id="menuBtn" class="secondary">Main Menu</button>
+          <button id="restartBtn">Еще раз</button>
+          <button id="menuBtn" class="secondary">Меню</button>
         </div>
       </div>
     </section>
   </main>
 
-  <script defer src="./src/math.js"></script>
-  <script defer src="./src/state.js"></script>
-  <script defer src="./src/assets.js"></script>
-  <script defer src="./src/input.js"></script>
-  <script defer src="./src/simulation.js"></script>
-  <script defer src="./src/renderer.js"></script>
-  <script defer src="./src/ui.js"></script>
-  <script defer src="./src/main.js"></script>
+  <script defer src="./src/math.js?v=4"></script>
+  <script defer src="./src/state.js?v=4"></script>
+  <script defer src="./src/assets.js?v=4"></script>
+  <script defer src="./src/leaderboard.js?v=4"></script>
+  <script defer src="./src/input.js?v=4"></script>
+  <script defer src="./src/simulation.js?v=4"></script>
+  <script defer src="./src/renderer.js?v=4"></script>
+  <script defer src="./src/ui.js?v=4"></script>
+  <script defer src="./src/main.js?v=4"></script>
 </body>
 </html>

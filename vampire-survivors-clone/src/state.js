@@ -39,7 +39,8 @@
     popups: [],
     floaters: [],
     upgradesPending: 0,
-    offeredUpgrades: []
+    offeredUpgrades: [],
+    scoreSubmitted: false
   });
 
   window.Nightbound = window.Nightbound || {};

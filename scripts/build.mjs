@@ -27,6 +27,21 @@ for (const entry of ['index.html', 'src', 'assets']) {
   if (existsSync(from)) cpSync(from, resolve(vampireOut, entry), { recursive: true })
 }
 
+// llm-moe-vector-animation → static copy
+const llmMoe = resolve(root, 'llm-moe-vector-animation')
+console.log('> copying llm-moe-vector-animation')
+cpSync(llmMoe, resolve(dist, 'llm-moe-vector-animation'), { recursive: true })
+
+// peacock-bike-pixar → static copy (single index.html)
+const peacock = resolve(root, 'peacock-bike-pixar')
+console.log('> copying peacock-bike-pixar')
+cpSync(peacock, resolve(dist, 'peacock-bike-pixar'), { recursive: true })
+
+// ramp-bucket-experiment → static copy
+const ramp = resolve(root, 'ramp-bucket-experiment')
+console.log('> copying ramp-bucket-experiment')
+cpSync(ramp, resolve(dist, 'ramp-bucket-experiment'), { recursive: true })
+
 // root landing
 const landing = readFileSync(resolve(root, 'scripts/landing.html'), 'utf8')
 writeFileSync(resolve(dist, 'index.html'), landing)

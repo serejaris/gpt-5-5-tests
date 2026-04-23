@@ -1,0 +1,1332 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Peacock Bicycle Studio</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #141820;
+      --paper: #fff7e8;
+      --gold: #e5af48;
+      --teal: #0f8f9e;
+      --coral: #d95d47;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #181b22;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.12), transparent 24rem),
+        radial-gradient(circle at 86% 70%, rgba(229, 175, 72, 0.13), transparent 20rem),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(20, 24, 32, 0.08));
+      mix-blend-mode: soft-light;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .hud {
+      position: fixed;
+      left: clamp(18px, 3vw, 42px);
+      bottom: clamp(18px, 3vw, 42px);
+      max-width: min(380px, calc(100vw - 36px));
+      padding: 16px 18px 17px;
+      color: rgba(255, 248, 230, 0.92);
+      background: rgba(23, 28, 38, 0.42);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 22px 60px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(18px) saturate(1.1);
+      opacity: 0;
+      transform: translate3d(0, 16px, 0);
+      animation: hud-in 900ms cubic-bezier(0.16, 1, 0.3, 1) 900ms forwards;
+    }
+
+    .hud h1 {
+      margin: 0;
+      font-size: clamp(18px, 2.4vw, 28px);
+      line-height: 1.02;
+      font-weight: 750;
+      letter-spacing: 0;
+    }
+
+    .hud p {
+      margin: 8px 0 0;
+      color: rgba(255, 248, 230, 0.68);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .loading {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: rgba(255, 247, 232, 0.86);
+      background:
+        radial-gradient(circle at 48% 42%, rgba(229, 175, 72, 0.18), transparent 21rem),
+        #181b22;
+      font-size: 13px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      transition: opacity 600ms ease, visibility 600ms ease;
+    }
+
+    .loading.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    @keyframes hud-in {
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .hud {
+        padding: 13px 14px;
+        border-radius: 14px;
+      }
+
+      .hud p {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loading">Rendering</div>
+  <div class="hud" aria-hidden="true">
+    <h1>Peacock Bicycle Studio</h1>
+    <p>Procedural feathers, moving pedals, rolling wheels, cinematic lights, and a tiny parade of gold dust.</p>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+    import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+    import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+    import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+
+    const TAU = Math.PI * 2;
+    const clampPixelRatio = Math.min(window.devicePixelRatio || 1, 1.85);
+    const viewport = new THREE.Vector2(window.innerWidth, window.innerHeight);
+    const clock = new THREE.Clock();
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0xf7c987, 0.012);
+
+    const camera = new THREE.PerspectiveCamera(42, viewport.x / viewport.y, 0.1, 140);
+    camera.position.set(6.4, 3.9, 7.2);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true,
+      powerPreference: "high-performance"
+    });
+    renderer.setSize(viewport.x, viewport.y);
+    renderer.setPixelRatio(clampPixelRatio);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.94;
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.92, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.055;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.28;
+    controls.minDistance = 4.0;
+    controls.maxDistance = 13.5;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.minPolarAngle = Math.PI * 0.18;
+
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+
+    const bloomPass = new UnrealBloomPass(viewport, 0.26, 0.46, 0.82);
+    composer.addPass(bloomPass);
+    composer.addPass(new OutputPass());
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2(0, 0);
+    const tailFlutterAxis = new THREE.Vector3(1, 0, 0);
+    const tailFlutterQuaternion = new THREE.Quaternion();
+    let pointerGlow = 0;
+
+    const palette = {
+      ink: new THREE.Color("#171b25"),
+      tire: new THREE.Color("#101218"),
+      cream: new THREE.Color("#fff3d6"),
+      gold: new THREE.Color("#e5af48"),
+      amber: new THREE.Color("#f2c46a"),
+      coral: new THREE.Color("#d95d47"),
+      red: new THREE.Color("#b74739"),
+      blue: new THREE.Color("#1267a4"),
+      peacock: new THREE.Color("#0b8294"),
+      teal: new THREE.Color("#0f9e8e"),
+      green: new THREE.Color("#38a35b"),
+      emerald: new THREE.Color("#1d7044"),
+      violet: new THREE.Color("#394c92")
+    };
+
+    const materials = {
+      tire: new THREE.MeshStandardMaterial({ color: palette.tire, roughness: 0.62, metalness: 0.08 }),
+      rubber: new THREE.MeshStandardMaterial({ color: "#151820", roughness: 0.78, metalness: 0.04 }),
+      chrome: new THREE.MeshPhysicalMaterial({
+        color: "#e9eef2",
+        metalness: 0.86,
+        roughness: 0.19,
+        clearcoat: 0.45
+      }),
+      frame: new THREE.MeshPhysicalMaterial({
+        color: palette.coral,
+        metalness: 0.18,
+        roughness: 0.34,
+        clearcoat: 0.74,
+        clearcoatRoughness: 0.18
+      }),
+      gold: new THREE.MeshPhysicalMaterial({
+        color: palette.gold,
+        metalness: 0.52,
+        roughness: 0.24,
+        clearcoat: 0.65
+      }),
+      tealMetal: new THREE.MeshPhysicalMaterial({
+        color: palette.peacock,
+        metalness: 0.18,
+        roughness: 0.29,
+        clearcoat: 0.72,
+        clearcoatRoughness: 0.18,
+        iridescence: 0.78,
+        iridescenceIOR: 1.45
+      }),
+      body: new THREE.MeshPhysicalMaterial({
+        color: "#087a9b",
+        metalness: 0.22,
+        roughness: 0.28,
+        clearcoat: 0.85,
+        clearcoatRoughness: 0.16,
+        iridescence: 0.94,
+        iridescenceIOR: 1.52
+      }),
+      neck: new THREE.MeshPhysicalMaterial({
+        color: "#0a8fa2",
+        metalness: 0.26,
+        roughness: 0.23,
+        clearcoat: 0.82,
+        iridescence: 0.72,
+        iridescenceIOR: 1.38
+      }),
+      wingDark: new THREE.MeshPhysicalMaterial({
+        color: "#124d83",
+        metalness: 0.12,
+        roughness: 0.38,
+        clearcoat: 0.55,
+        iridescence: 0.55
+      }),
+      beak: new THREE.MeshStandardMaterial({ color: "#f2b64a", roughness: 0.42, metalness: 0.04 }),
+      eyeWhite: new THREE.MeshStandardMaterial({ color: "#fffaf0", roughness: 0.36 }),
+      eyeBlack: new THREE.MeshStandardMaterial({ color: "#171920", roughness: 0.18 }),
+      ground: new THREE.MeshStandardMaterial({ color: "#f4c784", roughness: 0.58, metalness: 0.02 }),
+      lane: new THREE.MeshPhysicalMaterial({
+        color: "#ffe0a4",
+        roughness: 0.42,
+        metalness: 0.04,
+        clearcoat: 0.3
+      }),
+      cloud: new THREE.MeshStandardMaterial({ color: "#fff2dc", roughness: 0.9, metalness: 0.0 })
+    };
+
+    const animated = {
+      wheels: [],
+      tailFeathers: [],
+      crestTips: [],
+      dust: [],
+      legs: [],
+      pedals: null,
+      crank: null,
+      peacock: null,
+      bicycle: null,
+      wingFeathers: [],
+      sparklePoints: null,
+      sparklePositions: null,
+      sparkleMeta: [],
+      lightRings: []
+    };
+
+    function roundedCanvas(size = 96) {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      const gradient = ctx.createRadialGradient(size * 0.5, size * 0.5, 1, size * 0.5, size * 0.5, size * 0.5);
+      gradient.addColorStop(0, "rgba(255,255,255,1)");
+      gradient.addColorStop(0.34, "rgba(255,226,143,0.85)");
+      gradient.addColorStop(0.62, "rgba(255,162,83,0.3)");
+      gradient.addColorStop(1, "rgba(255,162,83,0)");
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(size * 0.5, size * 0.5, size * 0.48, 0, TAU);
+      ctx.fill();
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    }
+
+    const sparkleTexture = roundedCanvas(128);
+
+    function makeCylinderBetween(start, end, radius, material, segments = 12) {
+      const geometry = new THREE.CylinderGeometry(1, 1, 1, segments, 1, false);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      updateCylinderBetween(mesh, start, end, radius);
+      return mesh;
+    }
+
+    function updateCylinderBetween(mesh, start, end, radius = 0.035) {
+      const direction = new THREE.Vector3().subVectors(end, start);
+      const length = Math.max(direction.length(), 0.0001);
+      const midpoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+      mesh.position.copy(midpoint);
+      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+      mesh.scale.set(radius, length, radius);
+    }
+
+    function createTube(points, radius, material, tubularSegments = 48, radialSegments = 10) {
+      const curve = new THREE.CatmullRomCurve3(points);
+      const geometry = new THREE.TubeGeometry(curve, tubularSegments, radius, radialSegments, false);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      return mesh;
+    }
+
+    function createEllipsoid(radius, scale, material, segments = 48) {
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, segments, Math.max(18, segments / 2)), material);
+      mesh.scale.copy(scale);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      return mesh;
+    }
+
+    function createFeatherTexture(options) {
+      const {
+        bodyA = "#0f8f9e",
+        bodyB = "#34a85a",
+        rim = "#e5af48",
+        eyeA = "#143a74",
+        eyeB = "#44b35e",
+        eyeC = "#e6b648",
+        seed = 0
+      } = options;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = 320;
+      canvas.height = 1024;
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const outline = new Path2D();
+      outline.moveTo(w * 0.5, h * 0.985);
+      outline.bezierCurveTo(w * 0.08, h * 0.78, w * 0.05, h * 0.33, w * 0.5, h * 0.012);
+      outline.bezierCurveTo(w * 0.95, h * 0.33, w * 0.92, h * 0.78, w * 0.5, h * 0.985);
+      ctx.save();
+      ctx.clip(outline);
+
+      const grd = ctx.createLinearGradient(0, h, w, 0);
+      grd.addColorStop(0, bodyA);
+      grd.addColorStop(0.44, bodyB);
+      grd.addColorStop(0.68, rim);
+      grd.addColorStop(1, "#f8d981");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, w, h);
+
+      const glow = ctx.createRadialGradient(w * 0.5, h * 0.25, 4, w * 0.5, h * 0.25, w * 0.52);
+      glow.addColorStop(0, "rgba(255,255,255,0.34)");
+      glow.addColorStop(0.42, "rgba(62,180,109,0.22)");
+      glow.addColorStop(1, "rgba(8,24,40,0.18)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.lineWidth = 1.1;
+      for (let i = 0; i < 58; i++) {
+        const t = i / 57;
+        const y = h * (0.08 + t * 0.84);
+        const side = i % 2 === 0 ? -1 : 1;
+        const jitter = Math.sin((i + seed) * 8.11) * 0.07;
+        const x0 = w * 0.5;
+        const x1 = w * (0.5 + side * (0.22 + 0.18 * Math.sin(t * Math.PI)) + jitter);
+        ctx.beginPath();
+        ctx.moveTo(x0, y);
+        ctx.quadraticCurveTo(w * (0.5 + side * 0.18), y - h * 0.055, x1, y - h * 0.12);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "rgba(4,42,48,0.25)";
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.5, h * 0.99);
+      ctx.quadraticCurveTo(w * 0.48, h * 0.48, w * 0.5, h * 0.035);
+      ctx.stroke();
+
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = "rgba(255,255,255,0.34)";
+      ctx.beginPath();
+      ctx.moveTo(w * 0.515, h * 0.95);
+      ctx.quadraticCurveTo(w * 0.52, h * 0.46, w * 0.505, h * 0.05);
+      ctx.stroke();
+
+      const eyeX = w * (0.5 + Math.sin(seed * 5.2) * 0.015);
+      const eyeY = h * (0.285 + Math.sin(seed * 3.7) * 0.018);
+      ctx.translate(eyeX, eyeY);
+      ctx.rotate(Math.sin(seed * 2.9) * 0.08);
+      ctx.fillStyle = "rgba(10,18,30,0.22)";
+      ctx.beginPath();
+      ctx.ellipse(0, 13, w * 0.245, h * 0.078, 0, 0, TAU);
+      ctx.fill();
+
+      ctx.fillStyle = eyeC;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, w * 0.25, h * 0.09, 0, 0, TAU);
+      ctx.fill();
+
+      ctx.fillStyle = eyeB;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, w * 0.18, h * 0.064, 0, 0, TAU);
+      ctx.fill();
+
+      ctx.fillStyle = eyeA;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, w * 0.105, h * 0.044, 0, 0, TAU);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,255,255,0.72)";
+      ctx.beginPath();
+      ctx.ellipse(-w * 0.035, -h * 0.016, w * 0.033, h * 0.012, -0.32, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.strokeStyle = "rgba(255,245,198,0.48)";
+      ctx.lineWidth = 5;
+      ctx.stroke(outline);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = 8;
+      texture.needsUpdate = true;
+      return texture;
+    }
+
+    const featherTextures = [];
+    for (let i = 0; i < 12; i++) {
+      featherTextures.push(createFeatherTexture({
+        seed: i * 0.731,
+        bodyA: i % 3 === 0 ? "#0c6e91" : i % 3 === 1 ? "#0d8a82" : "#2052a0",
+        bodyB: i % 4 === 0 ? "#35a960" : i % 4 === 1 ? "#1f9f75" : i % 4 === 2 ? "#47a857" : "#167f73",
+        rim: i % 2 === 0 ? "#e8bc55" : "#8ec96d",
+        eyeA: i % 2 === 0 ? "#172c68" : "#0e465c",
+        eyeB: i % 2 === 0 ? "#2ea65c" : "#2d9f8c",
+        eyeC: i % 2 === 0 ? "#e9b84c" : "#f0d36b"
+      }));
+    }
+
+    function createFeather(width, length, texture, opacity = 1) {
+      const group = new THREE.Group();
+      const geometry = new THREE.PlaneGeometry(width, length, 1, 6);
+      geometry.translate(0, length * 0.5, 0);
+      const material = new THREE.MeshPhysicalMaterial({
+        map: texture,
+        transparent: true,
+        alphaTest: 0.05,
+        opacity,
+        side: THREE.DoubleSide,
+        roughness: 0.33,
+        metalness: 0.04,
+        clearcoat: 0.58,
+        clearcoatRoughness: 0.21,
+        iridescence: 0.55,
+        iridescenceIOR: 1.45
+      });
+      const blade = new THREE.Mesh(geometry, material);
+      blade.castShadow = true;
+      blade.receiveShadow = true;
+      blade.position.z = 0.012;
+      group.add(blade);
+
+      const spine = makeCylinderBetween(
+        new THREE.Vector3(0, 0.02, 0.03),
+        new THREE.Vector3(0, length * 0.96, 0.035),
+        Math.max(width * 0.012, 0.011),
+        materials.gold,
+        8
+      );
+      spine.castShadow = false;
+      group.add(spine);
+      return group;
+    }
+
+    function addLights() {
+      const hemi = new THREE.HemisphereLight(0xffead2, 0x273447, 2.1);
+      scene.add(hemi);
+
+      const sun = new THREE.DirectionalLight(0xfff2c6, 3.35);
+      sun.position.set(-5.5, 8.8, 5.2);
+      sun.castShadow = true;
+      sun.shadow.mapSize.set(2048, 2048);
+      sun.shadow.camera.near = 1;
+      sun.shadow.camera.far = 35;
+      sun.shadow.camera.left = -9;
+      sun.shadow.camera.right = 9;
+      sun.shadow.camera.top = 8;
+      sun.shadow.camera.bottom = -6;
+      sun.shadow.bias = -0.00015;
+      scene.add(sun);
+
+      const rim = new THREE.SpotLight(0x85f6ff, 48, 18, Math.PI * 0.19, 0.55, 1.15);
+      rim.position.set(4.6, 5.2, -5.2);
+      rim.target.position.set(-0.4, 2.3, 0);
+      rim.castShadow = true;
+      rim.shadow.mapSize.set(1024, 1024);
+      scene.add(rim, rim.target);
+
+      const goldWash = new THREE.PointLight(0xffb957, 5.4, 10.5, 1.7);
+      goldWash.position.set(-2.9, 2.1, 3.1);
+      scene.add(goldWash);
+
+      const cyanKick = new THREE.PointLight(0x4fd5cc, 3.5, 8.8, 1.6);
+      cyanKick.position.set(2.4, 1.2, -2.6);
+      scene.add(cyanKick);
+    }
+
+    function createGradientDome() {
+      const vertexShader = `
+        varying vec3 vWorld;
+        void main() {
+          vec4 world = modelMatrix * vec4(position, 1.0);
+          vWorld = normalize(world.xyz);
+          gl_Position = projectionMatrix * viewMatrix * world;
+        }
+      `;
+      const fragmentShader = `
+        varying vec3 vWorld;
+        void main() {
+          float h = clamp(vWorld.y * 0.5 + 0.5, 0.0, 1.0);
+          vec3 low = vec3(0.94, 0.56, 0.39);
+          vec3 mid = vec3(0.99, 0.76, 0.46);
+          vec3 high = vec3(0.42, 0.72, 0.86);
+          vec3 col = mix(low, mid, smoothstep(0.0, 0.52, h));
+          col = mix(col, high, smoothstep(0.44, 1.0, h));
+          float sun = pow(max(dot(normalize(vWorld), normalize(vec3(-0.45, 0.42, -0.6))), 0.0), 24.0);
+          col += vec3(1.0, 0.62, 0.22) * sun * 0.32;
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `;
+      const dome = new THREE.Mesh(
+        new THREE.SphereGeometry(70, 48, 24),
+        new THREE.ShaderMaterial({
+          vertexShader,
+          fragmentShader,
+          side: THREE.BackSide,
+          depthWrite: false
+        })
+      );
+      scene.add(dome);
+    }
+
+    function createGround() {
+      const root = new THREE.Group();
+      const stage = new THREE.Mesh(new THREE.CylinderGeometry(8.5, 9.2, 0.18, 128), materials.ground);
+      stage.position.y = -0.12;
+      stage.receiveShadow = true;
+      root.add(stage);
+
+      const laneCanvas = document.createElement("canvas");
+      laneCanvas.width = 1024;
+      laneCanvas.height = 256;
+      const ctx = laneCanvas.getContext("2d");
+      const grd = ctx.createLinearGradient(0, 0, laneCanvas.width, laneCanvas.height);
+      grd.addColorStop(0, "#ffe4a8");
+      grd.addColorStop(0.5, "#fff3d5");
+      grd.addColorStop(1, "#efbf6d");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, laneCanvas.width, laneCanvas.height);
+      ctx.fillStyle = "rgba(184,112,58,0.16)";
+      for (let i = -1; i < 18; i++) {
+        ctx.save();
+        ctx.translate(i * 96, 0);
+        ctx.rotate(-0.55);
+        ctx.fillRect(0, -80, 28, 440);
+        ctx.restore();
+      }
+      ctx.strokeStyle = "rgba(255,255,255,0.42)";
+      ctx.lineWidth = 9;
+      ctx.setLineDash([54, 42]);
+      ctx.beginPath();
+      ctx.moveTo(0, 128);
+      ctx.lineTo(1024, 128);
+      ctx.stroke();
+      const laneTexture = new THREE.CanvasTexture(laneCanvas);
+      laneTexture.colorSpace = THREE.SRGBColorSpace;
+      laneTexture.wrapS = THREE.RepeatWrapping;
+      laneTexture.wrapT = THREE.ClampToEdgeWrapping;
+      laneTexture.repeat.set(2, 1);
+      const laneMaterial = materials.lane.clone();
+      laneMaterial.map = laneTexture;
+
+      const lane = new THREE.Mesh(new THREE.PlaneGeometry(8.6, 1.24, 1, 1), laneMaterial);
+      lane.rotation.x = -Math.PI / 2;
+      lane.position.set(0, 0.006, 0);
+      lane.receiveShadow = true;
+      root.add(lane);
+
+      for (let i = 0; i < 4; i++) {
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(2.1 + i * 1.55, 2.14 + i * 1.55, 128),
+          new THREE.MeshBasicMaterial({
+            color: i % 2 === 0 ? "#fff0c9" : "#d99148",
+            transparent: true,
+            opacity: i % 2 === 0 ? 0.18 : 0.11,
+            side: THREE.DoubleSide
+          })
+        );
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = 0.013 + i * 0.002;
+        root.add(ring);
+        animated.lightRings.push(ring);
+      }
+
+      const pedestal = new THREE.Mesh(
+        new THREE.TorusGeometry(3.05, 0.035, 10, 160),
+        new THREE.MeshBasicMaterial({ color: "#fff5d0", transparent: true, opacity: 0.34 })
+      );
+      pedestal.rotation.x = Math.PI / 2;
+      pedestal.position.set(0, 0.05, 0);
+      root.add(pedestal);
+
+      scene.add(root);
+    }
+
+    function createCloudCluster(x, y, z, scale, count, drift) {
+      const group = new THREE.Group();
+      for (let i = 0; i < count; i++) {
+        const puff = createEllipsoid(
+          1,
+          new THREE.Vector3(
+            scale * (0.34 + Math.random() * 0.5),
+            scale * (0.16 + Math.random() * 0.22),
+            scale * (0.18 + Math.random() * 0.34)
+          ),
+          materials.cloud,
+          24
+        );
+        puff.position.set(
+          (Math.random() - 0.5) * scale * 1.7,
+          (Math.random() - 0.5) * scale * 0.36,
+          (Math.random() - 0.5) * scale * 0.52
+        );
+        puff.castShadow = false;
+        puff.receiveShadow = false;
+        group.add(puff);
+      }
+      group.position.set(x, y, z);
+      group.userData.drift = drift;
+      scene.add(group);
+      animated.dust.push(group);
+    }
+
+    function createEnvironmentDetails() {
+      createCloudCluster(-4.8, 4.8, -8.5, 1.25, 8, 0.17);
+      createCloudCluster(4.9, 5.2, -7.2, 1.08, 7, -0.13);
+      createCloudCluster(-6.3, 3.7, 4.8, 0.86, 6, 0.09);
+
+      const positions = new Float32Array(240 * 3);
+      const colors = new Float32Array(240 * 3);
+      animated.sparkleMeta = [];
+      const colorA = new THREE.Color("#fff0a8");
+      const colorB = new THREE.Color("#62d0bd");
+      for (let i = 0; i < 240; i++) {
+        const r = 2.2 + Math.random() * 8.2;
+        const a = Math.random() * TAU;
+        positions[i * 3 + 0] = Math.cos(a) * r;
+        positions[i * 3 + 1] = 0.3 + Math.random() * 5.1;
+        positions[i * 3 + 2] = Math.sin(a) * r - 1.4;
+        const c = colorA.clone().lerp(colorB, Math.random() * 0.36);
+        colors[i * 3 + 0] = c.r;
+        colors[i * 3 + 1] = c.g;
+        colors[i * 3 + 2] = c.b;
+        animated.sparkleMeta.push({
+          baseY: positions[i * 3 + 1],
+          speed: 0.25 + Math.random() * 0.85,
+          amp: 0.07 + Math.random() * 0.18,
+          phase: Math.random() * TAU
+        });
+      }
+      animated.sparklePositions = positions;
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      const material = new THREE.PointsMaterial({
+        size: 0.095,
+        map: sparkleTexture,
+        transparent: true,
+        depthWrite: false,
+        vertexColors: true,
+        blending: THREE.AdditiveBlending,
+        opacity: 0.55
+      });
+      const points = new THREE.Points(geometry, material);
+      animated.sparklePoints = points;
+      scene.add(points);
+    }
+
+    function createWheel(name, radius = 0.82) {
+      const group = new THREE.Group();
+      group.name = name;
+
+      const tire = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.075, 18, 96), materials.tire);
+      tire.castShadow = true;
+      tire.receiveShadow = true;
+      group.add(tire);
+
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.86, 0.025, 12, 96), materials.chrome);
+      rim.castShadow = true;
+      group.add(rim);
+
+      const accent = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.68, 0.012, 8, 96), materials.gold);
+      accent.castShadow = true;
+      group.add(accent);
+
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.36, 20), materials.gold);
+      hub.rotation.x = Math.PI / 2;
+      hub.castShadow = true;
+      group.add(hub);
+
+      const spokeMaterial = materials.chrome;
+      for (let i = 0; i < 36; i++) {
+        const a = (i / 36) * TAU;
+        const offset = i % 2 === 0 ? 0.07 : -0.07;
+        const start = new THREE.Vector3(0, 0, offset * 0.4);
+        const end = new THREE.Vector3(Math.cos(a) * radius * 0.82, Math.sin(a) * radius * 0.82, -offset);
+        const spoke = makeCylinderBetween(start, end, 0.0075, spokeMaterial, 6);
+        spoke.castShadow = false;
+        group.add(spoke);
+      }
+
+      const valve = makeCylinderBetween(
+        new THREE.Vector3(radius * 0.78, 0.02, 0.04),
+        new THREE.Vector3(radius * 0.98, 0.06, 0.04),
+        0.011,
+        materials.gold,
+        8
+      );
+      group.add(valve);
+
+      animated.wheels.push(group);
+      return group;
+    }
+
+    function createBicycle() {
+      const bike = new THREE.Group();
+      bike.name = "bicycle";
+      animated.bicycle = bike;
+
+      const rearHub = new THREE.Vector3(-1.55, 0.78, 0);
+      const frontHub = new THREE.Vector3(1.55, 0.78, 0);
+      const crank = new THREE.Vector3(-0.04, 1.04, 0);
+      const seatTubeTop = new THREE.Vector3(-0.58, 1.88, 0);
+      const headTubeTop = new THREE.Vector3(1.18, 1.92, 0);
+      const headTubeBottom = new THREE.Vector3(1.33, 1.25, 0);
+
+      const rearWheel = createWheel("rear-wheel");
+      rearWheel.position.copy(rearHub);
+      const frontWheel = createWheel("front-wheel");
+      frontWheel.position.copy(frontHub);
+      bike.add(rearWheel, frontWheel);
+
+      const frameSegments = [
+        [rearHub, crank, 0.045, materials.frame],
+        [crank, frontHub, 0.043, materials.frame],
+        [rearHub, seatTubeTop, 0.042, materials.frame],
+        [seatTubeTop, crank, 0.045, materials.frame],
+        [seatTubeTop, headTubeTop, 0.044, materials.frame],
+        [headTubeTop, headTubeBottom, 0.047, materials.frame],
+        [headTubeBottom, frontHub, 0.041, materials.frame],
+        [crank, headTubeTop, 0.036, materials.gold],
+        [rearHub.clone().add(new THREE.Vector3(0, 0.08, 0.08)), seatTubeTop.clone().add(new THREE.Vector3(0, 0.02, 0.08)), 0.018, materials.chrome],
+        [rearHub.clone().add(new THREE.Vector3(0, 0.08, -0.08)), seatTubeTop.clone().add(new THREE.Vector3(0, 0.02, -0.08)), 0.018, materials.chrome],
+        [headTubeBottom.clone().add(new THREE.Vector3(0, 0.02, 0.08)), frontHub.clone().add(new THREE.Vector3(0, 0.04, 0.08)), 0.018, materials.chrome],
+        [headTubeBottom.clone().add(new THREE.Vector3(0, 0.02, -0.08)), frontHub.clone().add(new THREE.Vector3(0, 0.04, -0.08)), 0.018, materials.chrome]
+      ];
+      frameSegments.forEach(([a, b, radius, material]) => bike.add(makeCylinderBetween(a, b, radius, material, 14)));
+
+      const seatPost = makeCylinderBetween(seatTubeTop, seatTubeTop.clone().add(new THREE.Vector3(-0.02, 0.34, 0)), 0.032, materials.chrome, 12);
+      bike.add(seatPost);
+      const seat = createEllipsoid(1, new THREE.Vector3(0.34, 0.09, 0.21), materials.rubber, 32);
+      seat.position.set(-0.66, 2.25, 0);
+      seat.rotation.z = -0.08;
+      bike.add(seat);
+
+      const handleStem = makeCylinderBetween(headTubeTop, new THREE.Vector3(1.42, 2.42, 0), 0.034, materials.chrome, 12);
+      bike.add(handleStem);
+      const barLeft = makeCylinderBetween(new THREE.Vector3(1.42, 2.42, -0.48), new THREE.Vector3(1.42, 2.42, 0.48), 0.032, materials.chrome, 14);
+      bike.add(barLeft);
+      const gripA = makeCylinderBetween(new THREE.Vector3(1.43, 2.41, -0.58), new THREE.Vector3(1.42, 2.42, -0.37), 0.045, materials.rubber, 14);
+      const gripB = makeCylinderBetween(new THREE.Vector3(1.43, 2.41, 0.58), new THREE.Vector3(1.42, 2.42, 0.37), 0.045, materials.rubber, 14);
+      bike.add(gripA, gripB);
+
+      const bell = createEllipsoid(1, new THREE.Vector3(0.13, 0.13, 0.13), materials.gold, 24);
+      bell.position.set(1.39, 2.53, 0.18);
+      bike.add(bell);
+      const bellCap = new THREE.Mesh(new THREE.TorusGeometry(0.105, 0.012, 8, 24), materials.chrome);
+      bellCap.position.copy(bell.position);
+      bellCap.rotation.x = Math.PI / 2;
+      bike.add(bellCap);
+
+      const crankGroup = new THREE.Group();
+      crankGroup.position.copy(crank);
+      animated.crank = crankGroup;
+      const crankHub = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.26, 24), materials.gold);
+      crankHub.rotation.x = Math.PI / 2;
+      crankHub.castShadow = true;
+      crankGroup.add(crankHub);
+
+      const armA = makeCylinderBetween(new THREE.Vector3(0, 0, 0.08), new THREE.Vector3(0.34, 0, 0.08), 0.018, materials.chrome, 8);
+      const armB = makeCylinderBetween(new THREE.Vector3(0, 0, -0.08), new THREE.Vector3(-0.34, 0, -0.08), 0.018, materials.chrome, 8);
+      const pedalA = makeCylinderBetween(new THREE.Vector3(0.34, -0.055, -0.15), new THREE.Vector3(0.34, -0.055, 0.24), 0.018, materials.rubber, 8);
+      const pedalB = makeCylinderBetween(new THREE.Vector3(-0.34, -0.055, -0.24), new THREE.Vector3(-0.34, -0.055, 0.15), 0.018, materials.rubber, 8);
+      crankGroup.add(armA, armB, pedalA, pedalB);
+      bike.add(crankGroup);
+
+      const chain = new THREE.Group();
+      const rearGear = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.016, 8, 48), materials.chrome);
+      rearGear.position.copy(rearHub);
+      const frontGear = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.018, 8, 64), materials.gold);
+      frontGear.position.copy(crank);
+      chain.add(rearGear, frontGear);
+      const upperChain = makeCylinderBetween(new THREE.Vector3(-1.55, 1.04, 0.015), new THREE.Vector3(-0.04, 1.38, 0.015), 0.012, materials.rubber, 8);
+      const lowerChain = makeCylinderBetween(new THREE.Vector3(-1.55, 0.55, 0.015), new THREE.Vector3(-0.04, 0.71, 0.015), 0.012, materials.rubber, 8);
+      chain.add(upperChain, lowerChain);
+      bike.add(chain);
+
+      const ribbonMaterial = new THREE.MeshBasicMaterial({
+        color: "#fff2bd",
+        transparent: true,
+        opacity: 0.76,
+        side: THREE.DoubleSide
+      });
+      for (let side of [-1, 1]) {
+        const ribbon = createTube([
+          new THREE.Vector3(1.46, 2.4, side * 0.54),
+          new THREE.Vector3(1.61, 2.2, side * 0.68),
+          new THREE.Vector3(1.45, 2.0, side * 0.74)
+        ], 0.012, ribbonMaterial, 24, 5);
+        ribbon.userData.phase = side > 0 ? 0 : Math.PI;
+        animated.dust.push(ribbon);
+        bike.add(ribbon);
+      }
+
+      scene.add(bike);
+      return bike;
+    }
+
+    function createWing(side) {
+      const group = new THREE.Group();
+      const baseZ = side * 0.45;
+      group.position.set(-0.12, 2.18, baseZ);
+      group.rotation.set(0.05, side * -0.78, side * -0.08);
+
+      for (let i = 0; i < 9; i++) {
+        const feather = createFeather(0.21 + i * 0.012, 0.58 + i * 0.025, featherTextures[(i + (side > 0 ? 2 : 5)) % featherTextures.length], 0.96);
+        feather.position.set(0.06 - i * 0.045, -0.14 - i * 0.015, side * (0.016 + i * 0.003));
+        feather.rotation.z = side * (0.85 + i * 0.075);
+        feather.rotation.y = side * 0.06;
+        feather.scale.setScalar(0.55);
+        group.add(feather);
+        animated.wingFeathers.push({ group: feather, phase: i * 0.37 + (side > 0 ? 0.6 : 1.4), amplitude: 0.035 + i * 0.002 });
+      }
+
+      return group;
+    }
+
+    function createTailFan() {
+      const fan = new THREE.Group();
+      fan.position.set(-0.84, 2.12, 0);
+      fan.rotation.set(0.02, 0.02, 0);
+
+      const tailSocket = createEllipsoid(1, new THREE.Vector3(0.23, 0.18, 0.2), materials.body, 32);
+      tailSocket.position.set(0.02, -0.02, 0);
+      tailSocket.rotation.z = -0.15;
+      fan.add(tailSocket);
+
+      const rings = [
+        { count: 37, min: -1.18, max: 1.18, length: 2.82, width: 0.46, y: -0.03, x: -0.08, opacity: 0.97, lean: -0.16 },
+        { count: 31, min: -0.98, max: 0.98, length: 2.34, width: 0.39, y: 0.04, x: -0.03, opacity: 0.99, lean: -0.12 },
+        { count: 23, min: -0.74, max: 0.74, length: 1.92, width: 0.33, y: 0.1, x: 0.02, opacity: 1.0, lean: -0.08 }
+      ];
+
+      const localWidth = new THREE.Vector3();
+      const localSpine = new THREE.Vector3();
+      const localNormal = new THREE.Vector3();
+      const basis = new THREE.Matrix4();
+
+      rings.forEach((ring, ringIndex) => {
+        for (let i = 0; i < ring.count; i++) {
+          const t = ring.count === 1 ? 0.5 : i / (ring.count - 1);
+          const angle = THREE.MathUtils.lerp(ring.min, ring.max, t);
+          const featherLength = ring.length * (0.88 + Math.sin(t * Math.PI) * 0.2);
+          const featherWidth = ring.width * (0.82 + Math.sin(t * Math.PI) * 0.24);
+          const feather = createFeather(
+            featherWidth,
+            featherLength,
+            featherTextures[(i + ringIndex * 4) % featherTextures.length],
+            ring.opacity
+          );
+          const side = Math.sin(angle);
+          feather.position.set(
+            ring.x - ringIndex * 0.015,
+            ring.y - ringIndex * 0.012 + Math.abs(side) * 0.035,
+            side * 0.08 + (i - ring.count * 0.5) * 0.0018
+          );
+
+          localSpine.set(ring.lean - Math.cos(angle) * 0.04, Math.cos(angle) * 0.98, side * 1.08).normalize();
+          localWidth.set(0, -side, Math.cos(angle)).normalize();
+          localNormal.crossVectors(localWidth, localSpine).normalize();
+          basis.makeBasis(localWidth, localSpine, localNormal);
+          feather.quaternion.setFromRotationMatrix(basis);
+
+          const scale = 0.95 - ringIndex * 0.035 + Math.sin(t * Math.PI) * 0.05;
+          feather.scale.setScalar(scale);
+          feather.userData.baseQuaternion = feather.quaternion.clone();
+          feather.userData.phase = (i * 0.47 + ringIndex * 1.6) % TAU;
+          feather.userData.amplitude = 0.012 + ringIndex * 0.005 + Math.abs(t - 0.5) * 0.01;
+          fan.add(feather);
+          animated.tailFeathers.push(feather);
+        }
+      });
+
+      const baseTexture = featherTextures[2];
+      for (let i = 0; i < 16; i++) {
+        const angle = THREE.MathUtils.lerp(-0.55, 0.55, i / 15);
+        const covert = createFeather(0.2, 0.62, baseTexture, 1);
+        const side = Math.sin(angle);
+        covert.position.set(0.04, -0.08 + Math.abs(side) * 0.03, side * 0.19);
+        localSpine.set(-0.14, 0.74 + Math.cos(angle) * 0.15, side * 0.64).normalize();
+        localWidth.set(0, -side, Math.cos(angle)).normalize();
+        localNormal.crossVectors(localWidth, localSpine).normalize();
+        basis.makeBasis(localWidth, localSpine, localNormal);
+        covert.quaternion.setFromRotationMatrix(basis);
+        covert.scale.setScalar(0.66);
+        covert.userData.baseQuaternion = covert.quaternion.clone();
+        covert.userData.phase = (i * 0.41 + 1.2) % TAU;
+        covert.userData.amplitude = 0.009;
+        fan.add(covert);
+        animated.tailFeathers.push(covert);
+      }
+
+      return fan;
+    }
+
+    function createPeacock() {
+      const peacock = new THREE.Group();
+      peacock.name = "peacock";
+      animated.peacock = peacock;
+
+      const body = createEllipsoid(1, new THREE.Vector3(0.88, 0.43, 0.36), materials.body, 64);
+      body.position.set(-0.14, 2.25, 0);
+      body.rotation.z = -0.1;
+      peacock.add(body);
+
+      const rump = createEllipsoid(1, new THREE.Vector3(0.34, 0.28, 0.31), materials.body, 42);
+      rump.position.set(-0.76, 2.17, 0);
+      rump.rotation.z = 0.08;
+      peacock.add(rump);
+
+      const chest = createEllipsoid(1, new THREE.Vector3(0.39, 0.34, 0.31), materials.neck, 42);
+      chest.position.set(0.49, 2.34, 0);
+      chest.rotation.z = -0.16;
+      peacock.add(chest);
+
+      const bellyGlow = createEllipsoid(1, new THREE.Vector3(0.45, 0.32, 0.36), new THREE.MeshPhysicalMaterial({
+        color: "#12a7ad",
+        roughness: 0.25,
+        metalness: 0.16,
+        clearcoat: 0.7,
+        transparent: true,
+        opacity: 0.72
+      }), 42);
+      bellyGlow.position.set(0.04, 2.14, 0.025);
+      bellyGlow.scale.set(1.05, 0.82, 0.82);
+      peacock.add(bellyGlow);
+
+      const neck = createTube([
+        new THREE.Vector3(0.42, 2.38, 0),
+        new THREE.Vector3(0.66, 2.66, 0.015),
+        new THREE.Vector3(0.84, 2.98, 0.01),
+        new THREE.Vector3(1.02, 3.18, 0)
+      ], 0.118, materials.neck, 64, 16);
+      peacock.add(neck);
+
+      const head = createEllipsoid(1, new THREE.Vector3(0.29, 0.24, 0.25), materials.neck, 48);
+      head.position.set(1.1, 3.23, 0);
+      head.rotation.z = -0.08;
+      peacock.add(head);
+
+      const facePatchMaterial = new THREE.MeshStandardMaterial({ color: "#f7f2de", roughness: 0.46 });
+      for (let side of [-1, 1]) {
+        const patch = createEllipsoid(1, new THREE.Vector3(0.075, 0.115, 0.035), facePatchMaterial, 24);
+        patch.position.set(1.325, 3.255, side * 0.128);
+        patch.rotation.y = side * 0.42;
+        peacock.add(patch);
+
+        const eye = createEllipsoid(1, new THREE.Vector3(0.037, 0.044, 0.027), materials.eyeWhite, 20);
+        eye.position.set(1.365, 3.302, side * 0.108);
+        peacock.add(eye);
+        const pupil = createEllipsoid(1, new THREE.Vector3(0.017, 0.02, 0.012), materials.eyeBlack, 16);
+        pupil.position.set(1.392, 3.3, side * 0.11);
+        peacock.add(pupil);
+      }
+
+      const beak = new THREE.Mesh(new THREE.ConeGeometry(0.095, 0.36, 32), materials.beak);
+      beak.rotation.z = -Math.PI / 2;
+      beak.position.set(1.43, 3.2, 0);
+      beak.castShadow = true;
+      peacock.add(beak);
+
+      const beakLower = new THREE.Mesh(new THREE.ConeGeometry(0.064, 0.25, 24), materials.gold);
+      beakLower.rotation.z = -Math.PI / 2;
+      beakLower.position.set(1.39, 3.153, 0);
+      beakLower.scale.y = 0.72;
+      beakLower.castShadow = true;
+      peacock.add(beakLower);
+
+      const crestMat = new THREE.MeshPhysicalMaterial({
+        color: "#0c7d86",
+        roughness: 0.29,
+        metalness: 0.22,
+        clearcoat: 0.65,
+        iridescence: 0.6
+      });
+      for (let i = 0; i < 7; i++) {
+        const offset = i - 3;
+        const start = new THREE.Vector3(1.03 + offset * 0.015, 3.48, offset * 0.035);
+        const end = new THREE.Vector3(0.95 + offset * 0.04, 3.82 + Math.abs(offset) * -0.02, offset * 0.095);
+        const stem = makeCylinderBetween(start, end, 0.01, crestMat, 7);
+        peacock.add(stem);
+        const tip = createEllipsoid(1, new THREE.Vector3(0.06, 0.085, 0.06), crestMat, 20);
+        tip.position.copy(end);
+        tip.userData.base = end.clone();
+        tip.userData.phase = i * 0.51;
+        peacock.add(tip);
+        animated.crestTips.push(tip);
+      }
+
+      const wingLeft = createWing(1);
+      const wingRight = createWing(-1);
+      peacock.add(wingLeft, wingRight);
+
+      const tailFan = createTailFan();
+      peacock.add(tailFan);
+
+      const backShadow = createEllipsoid(1, new THREE.Vector3(0.24, 0.2, 0.28), new THREE.MeshStandardMaterial({
+        color: "#073e55",
+        roughness: 0.42,
+        transparent: true,
+        opacity: 0.52
+      }), 32);
+      backShadow.position.set(-0.76, 2.04, 0);
+      peacock.add(backShadow);
+
+      scene.add(peacock);
+      return peacock;
+    }
+
+    function createLegRig() {
+      const legMaterial = new THREE.MeshStandardMaterial({ color: "#d89c3c", roughness: 0.47, metalness: 0.08 });
+      const jointMaterial = new THREE.MeshStandardMaterial({ color: "#f1c36a", roughness: 0.4 });
+      const rig = new THREE.Group();
+      const sides = [
+        { side: 1, phase: 0, hip: new THREE.Vector3(-0.24, 1.95, 0.18) },
+        { side: -1, phase: Math.PI, hip: new THREE.Vector3(-0.18, 1.95, -0.18) }
+      ];
+
+      sides.forEach((item) => {
+        const thigh = makeCylinderBetween(new THREE.Vector3(), new THREE.Vector3(0, -0.4, 0), 0.034, legMaterial, 10);
+        const shin = makeCylinderBetween(new THREE.Vector3(), new THREE.Vector3(0, -0.4, 0), 0.029, legMaterial, 10);
+        const foot = createEllipsoid(1, new THREE.Vector3(0.14, 0.045, 0.075), jointMaterial, 18);
+        const knee = createEllipsoid(1, new THREE.Vector3(0.052, 0.052, 0.052), jointMaterial, 16);
+        rig.add(thigh, shin, foot, knee);
+        animated.legs.push({ ...item, thigh, shin, foot, knee });
+      });
+
+      scene.add(rig);
+    }
+
+    function createWheelDust() {
+      const group = new THREE.Group();
+      const dustMaterial = new THREE.SpriteMaterial({
+        map: sparkleTexture,
+        color: "#ffd172",
+        transparent: true,
+        opacity: 0.78,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      for (let i = 0; i < 54; i++) {
+        const sprite = new THREE.Sprite(dustMaterial.clone());
+        sprite.position.set(-1.9 - Math.random() * 0.9, 0.28 + Math.random() * 0.52, (Math.random() - 0.5) * 0.56);
+        const s = 0.05 + Math.random() * 0.13;
+        sprite.scale.set(s, s, s);
+        sprite.userData = {
+          phase: Math.random() * TAU,
+          speed: 0.42 + Math.random() * 0.7,
+          base: sprite.position.clone()
+        };
+        group.add(sprite);
+      }
+      scene.add(group);
+      animated.dust.push(group);
+    }
+
+    function createDecorativePedestalLights() {
+      const bulbMat = new THREE.MeshBasicMaterial({ color: "#fff0b5" });
+      const glassMat = new THREE.MeshPhysicalMaterial({
+        color: "#ffcf65",
+        transparent: true,
+        opacity: 0.34,
+        roughness: 0.1,
+        metalness: 0.02,
+        transmission: 0.22
+      });
+      for (let i = 0; i < 18; i++) {
+        const a = (i / 18) * TAU;
+        const r = 4.4 + (i % 2) * 0.32;
+        const group = new THREE.Group();
+        group.position.set(Math.cos(a) * r, 0.16, Math.sin(a) * r);
+        const bulb = createEllipsoid(1, new THREE.Vector3(0.045, 0.045, 0.045), bulbMat, 12);
+        const glass = createEllipsoid(1, new THREE.Vector3(0.11, 0.11, 0.11), glassMat, 14);
+        group.add(bulb, glass);
+        group.userData.phase = a;
+        animated.lightRings.push(group);
+        scene.add(group);
+      }
+    }
+
+    function buildScene() {
+      addLights();
+      createGradientDome();
+      createGround();
+      createEnvironmentDetails();
+      createBicycle();
+      createPeacock();
+      createLegRig();
+      createWheelDust();
+      createDecorativePedestalLights();
+    }
+
+    function wheelPedalPosition(angle, side) {
+      const crankPosition = new THREE.Vector3(-0.04, 1.04, 0);
+      const radius = 0.34;
+      return crankPosition.add(new THREE.Vector3(Math.cos(angle) * radius, Math.sin(angle) * radius, side * 0.18));
+    }
+
+    function updateLegs(time, crankAngle) {
+      const bodyBob = Math.sin(time * 2.1) * 0.035;
+      animated.legs.forEach((leg) => {
+        const angle = crankAngle + leg.phase;
+        const hip = leg.hip.clone();
+        hip.y += bodyBob;
+        const footPos = wheelPedalPosition(angle, leg.side);
+        const mid = hip.clone().lerp(footPos, 0.5);
+        const knee = mid.add(new THREE.Vector3(
+          0.12 * Math.cos(angle + leg.side * 0.35),
+          0.1 + Math.sin(angle) * 0.03,
+          leg.side * (0.22 + Math.sin(angle) * 0.04)
+        ));
+        updateCylinderBetween(leg.thigh, hip, knee, 0.034);
+        updateCylinderBetween(leg.shin, knee, footPos, 0.029);
+        leg.foot.position.copy(footPos).add(new THREE.Vector3(0.02, -0.04, 0));
+        leg.foot.rotation.set(0, 0, Math.sin(angle) * 0.34);
+        leg.knee.position.copy(knee);
+      });
+    }
+
+    function updateSparkles(time) {
+      if (!animated.sparklePoints) return;
+      const positions = animated.sparklePositions;
+      for (let i = 0; i < animated.sparkleMeta.length; i++) {
+        const meta = animated.sparkleMeta[i];
+        positions[i * 3 + 1] = meta.baseY + Math.sin(time * meta.speed + meta.phase) * meta.amp;
+        positions[i * 3 + 0] += Math.sin(time * 0.08 + meta.phase) * 0.0009;
+      }
+      animated.sparklePoints.geometry.attributes.position.needsUpdate = true;
+      animated.sparklePoints.rotation.y = Math.sin(time * 0.05) * 0.07;
+      animated.sparklePoints.material.opacity = 0.48 + Math.sin(time * 0.8) * 0.1;
+    }
+
+    function animate() {
+      const elapsed = clock.getElapsedTime();
+      const delta = Math.min(clock.getDelta(), 0.033);
+      const crankAngle = -elapsed * 3.35;
+
+      if (animated.peacock) {
+        animated.peacock.position.y = Math.sin(elapsed * 2.1) * 0.035;
+        animated.peacock.rotation.z = Math.sin(elapsed * 1.4) * 0.012;
+        animated.peacock.rotation.y = Math.sin(elapsed * 0.72) * 0.025;
+      }
+
+      if (animated.bicycle) {
+        animated.bicycle.position.y = Math.sin(elapsed * 2.1 + 0.3) * 0.018;
+        animated.bicycle.rotation.z = Math.sin(elapsed * 1.4 + 0.8) * 0.006;
+      }
+
+      animated.wheels.forEach((wheel, index) => {
+        wheel.rotation.z = -elapsed * 3.8 + index * 0.04;
+      });
+
+      if (animated.crank) {
+        animated.crank.rotation.z = crankAngle;
+      }
+
+      updateLegs(elapsed, crankAngle);
+
+      animated.tailFeathers.forEach((feather, i) => {
+        const phase = feather.userData.phase ?? i * 0.37;
+        const amplitude = feather.userData.amplitude ?? 0.01;
+        if (feather.userData.baseQuaternion) {
+          tailFlutterQuaternion.setFromAxisAngle(tailFlutterAxis, Math.sin(elapsed * 1.35 + phase) * amplitude);
+          feather.quaternion.copy(feather.userData.baseQuaternion).multiply(tailFlutterQuaternion);
+        } else {
+          const baseRotZ = feather.userData.baseRotZ ?? feather.rotation.z;
+          const baseRotY = feather.userData.baseRotY ?? feather.rotation.y;
+          feather.rotation.z = baseRotZ + Math.sin(elapsed * 1.4 + phase) * amplitude;
+          feather.rotation.y = baseRotY + Math.cos(elapsed * 1.1 + i * 0.1) * 0.015;
+        }
+      });
+
+      animated.wingFeathers.forEach((entry) => {
+        entry.group.rotation.y += Math.sin(elapsed * 2.2 + entry.phase) * entry.amplitude * delta;
+      });
+
+      animated.crestTips.forEach((tip) => {
+        tip.position.copy(tip.userData.base);
+        tip.position.x += Math.sin(elapsed * 2.4 + tip.userData.phase) * 0.015;
+        tip.position.z += Math.cos(elapsed * 1.9 + tip.userData.phase) * 0.014;
+      });
+
+      animated.dust.forEach((item, index) => {
+        if (item.isSprite) return;
+        if (item.children && item.children[0] && item.children[0].isSprite) {
+          item.children.forEach((sprite, i) => {
+            const phase = sprite.userData.phase;
+            const base = sprite.userData.base;
+            const k = (elapsed * sprite.userData.speed + phase) % 1;
+            sprite.position.set(
+              base.x + k * 1.1,
+              base.y + Math.sin(elapsed * 5 + phase) * 0.09 + k * 0.18,
+              base.z + Math.sin(elapsed * 2.3 + phase) * 0.16
+            );
+            const fade = Math.sin(k * Math.PI);
+            sprite.material.opacity = 0.16 + fade * 0.68;
+          });
+        } else if (item.userData && typeof item.userData.drift === "number") {
+          item.position.x += Math.sin(elapsed * 0.1 + index) * 0.0005;
+          item.rotation.y = Math.sin(elapsed * item.userData.drift) * 0.04;
+        } else if (item.type === "Mesh") {
+          item.rotation.z = Math.sin(elapsed * 4 + item.userData.phase) * 0.24;
+        }
+      });
+
+      animated.lightRings.forEach((item, i) => {
+        if (item.isMesh && item.geometry.type === "RingGeometry") {
+          item.rotation.z = elapsed * 0.05 * (i % 2 === 0 ? 1 : -1);
+          item.material.opacity = 0.12 + Math.sin(elapsed * 0.8 + i) * 0.035;
+        } else if (item.isGroup) {
+          item.position.y = 0.16 + Math.sin(elapsed * 1.7 + item.userData.phase) * 0.025;
+          item.scale.setScalar(1 + Math.sin(elapsed * 2.1 + item.userData.phase) * 0.08);
+        }
+      });
+
+      pointerGlow = THREE.MathUtils.lerp(pointerGlow, Math.hypot(pointer.x, pointer.y), 0.04);
+      bloomPass.strength = 0.23 + pointerGlow * 0.07 + Math.sin(elapsed * 0.7) * 0.02;
+
+      updateSparkles(elapsed);
+      controls.update();
+      composer.render();
+      requestAnimationFrame(animate);
+    }
+
+    function resize() {
+      viewport.set(window.innerWidth, window.innerHeight);
+      camera.aspect = viewport.x / viewport.y;
+      camera.updateProjectionMatrix();
+      renderer.setSize(viewport.x, viewport.y);
+      composer.setSize(viewport.x, viewport.y);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.85));
+    }
+
+    window.addEventListener("resize", resize, { passive: true });
+    window.addEventListener("pointermove", (event) => {
+      pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+    }, { passive: true });
+
+    renderer.domElement.addEventListener("webglcontextlost", (event) => {
+      event.preventDefault();
+      document.getElementById("loading").classList.remove("is-hidden");
+    });
+
+    buildScene();
+    requestAnimationFrame(() => {
+      document.getElementById("loading").classList.add("is-hidden");
+      animate();
+    });
+  </script>
+</body>
+</html>

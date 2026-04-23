@@ -64,6 +64,7 @@ canvas {
 .stats,
 .weapons,
 .upgrade-card,
+.leaderboard-panel,
 .menu-panel {
   border: 1px solid var(--line);
   background: var(--panel);
@@ -80,7 +81,7 @@ canvas {
 
 .bar-row {
   display: grid;
-  grid-template-columns: 36px 1fr 56px;
+  grid-template-columns: 52px 1fr 56px;
   gap: 8px;
   align-items: center;
   font-size: 12px;
@@ -270,6 +271,122 @@ button:hover {
   filter: brightness(1.08);
 }
 
+button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.3) brightness(0.82);
+  opacity: 0.7;
+}
+
+.leaderboard-panel {
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.panel-title {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.leaderboard-list {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.leaderboard-list li {
+  min-height: 32px;
+  display: grid;
+  grid-template-columns: 42px minmax(80px, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.leaderboard-list li:first-child {
+  background: rgba(255, 209, 102, 0.13);
+}
+
+.rank {
+  color: var(--amber);
+  font-weight: 900;
+}
+
+.leader-name {
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leader-meta {
+  grid-column: 2 / 4;
+  color: rgba(244, 247, 251, 0.58);
+  font-size: 11px;
+}
+
+.score-line {
+  color: var(--amber);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.score-form {
+  display: grid;
+  gap: 8px;
+}
+
+.score-form label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.score-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  user-select: text;
+}
+
+input:focus {
+  border-color: rgba(99, 215, 255, 0.75);
+  box-shadow: 0 0 0 3px rgba(99, 215, 255, 0.14);
+}
+
+.form-status {
+  min-height: 16px;
+  color: var(--cyan);
+  font-size: 12px;
+}
+
+.score-form.submitted input {
+  opacity: 0.72;
+}
+
 .upgrade-grid {
   width: min(920px, calc(100vw - 32px));
   display: grid;
@@ -346,7 +463,7 @@ button:hover {
 
   .hud {
     inset: 10px 10px auto 10px;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 
@@ -359,8 +476,25 @@ button:hover {
   }
 
   .weapons {
-    width: min(188px, 44vw);
+    width: 100%;
     padding: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .weapon-row {
+    grid-template-columns: 1fr;
+  }
+
+  .weapon-row span {
+    display: none;
+  }
+
+  .bar-row {
+    grid-template-columns: 52px 1fr;
+  }
+
+  .bar-row > span {
+    display: none;
   }
 
   .weapon-row {
@@ -396,5 +530,14 @@ button:hover {
   .start-overlay .menu-panel {
     justify-self: center;
     margin-left: 0;
+  }
+
+  .score-input-row,
+  .leaderboard-list li {
+    grid-template-columns: 1fr;
+  }
+
+  .leader-meta {
+    grid-column: auto;
   }
 }
