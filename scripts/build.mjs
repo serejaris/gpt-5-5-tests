@@ -42,6 +42,13 @@ const ramp = resolve(root, 'ramp-bucket-experiment')
 console.log('> copying ramp-bucket-experiment')
 cpSync(ramp, resolve(dist, 'ramp-bucket-experiment'), { recursive: true })
 
+// first-person-dungeon-crawler → vite build
+const dungeon = resolve(root, 'first-person-dungeon-crawler')
+console.log('> building first-person-dungeon-crawler')
+execSync('npm install --no-audit --no-fund --loglevel=error', { cwd: dungeon, stdio: 'inherit' })
+execSync('npm run build', { cwd: dungeon, stdio: 'inherit' })
+cpSync(resolve(dungeon, 'dist'), resolve(dist, 'first-person-dungeon-crawler'), { recursive: true })
+
 // root landing
 const landing = readFileSync(resolve(root, 'scripts/landing.html'), 'utf8')
 writeFileSync(resolve(dist, 'index.html'), landing)

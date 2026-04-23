@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#17120d" />
+    <title>Vault of Ashenford</title>
+  </head>
+  <body>
+    <main id="app">
+      <section class="game-shell" aria-label="Vault of Ashenford game">
+        <section class="viewport-panel">
+          <canvas id="viewport" width="960" height="600" aria-label="First-person dungeon view"></canvas>
+          <div class="crosshair" aria-hidden="true"></div>
+          <div id="toast" class="toast" aria-live="polite"></div>
+        </section>
+
+        <aside class="side-panel" aria-label="Game controls and inventory">
+          <div class="panel-top">
+            <div>
+              <p class="eyebrow">Vault of Ashenford</p>
+              <h1 id="areaName">Ashenford</h1>
+            </div>
+            <div class="coin-box">
+              <span>Gold</span>
+              <strong id="gold">0</strong>
+            </div>
+          </div>
+
+          <section class="mini-map-wrap" aria-label="Automap">
+            <div class="mini-map-head">
+              <span id="compass">N</span>
+              <span id="coords">0,0</span>
+            </div>
+            <div id="miniMap" class="mini-map"></div>
+          </section>
+
+          <section class="actions" aria-label="Movement controls">
+            <button type="button" data-action="turn-left" title="Turn left">↶</button>
+            <button type="button" data-action="move-forward" title="Move forward">↑</button>
+            <button type="button" data-action="turn-right" title="Turn right">↷</button>
+            <button type="button" data-action="strafe-left" title="Strafe left">←</button>
+            <button type="button" data-action="interact" class="primary" title="Interact">Use</button>
+            <button type="button" data-action="strafe-right" title="Strafe right">→</button>
+            <button type="button" data-action="attack" title="Attack">⚔</button>
+            <button type="button" data-action="move-back" title="Step back">↓</button>
+            <button type="button" data-action="use-item" title="Use selected item">✦</button>
+          </section>
+
+          <section aria-label="Inventory">
+            <div class="section-title">
+              <span>Inventory</span>
+              <small id="selectedItem">Sword</small>
+            </div>
+            <div id="inventory" class="inventory"></div>
+          </section>
+
+          <section aria-label="Quest log">
+            <div class="section-title">
+              <span>Log</span>
+            </div>
+            <ol id="log" class="log"></ol>
+          </section>
+        </aside>
+
+        <section id="party" class="party-panel" aria-label="Party status"></section>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

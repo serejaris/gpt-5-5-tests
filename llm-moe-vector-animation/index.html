@@ -83,7 +83,7 @@
         </aside>
 
         <section class="stage-wrap" aria-label="Animated LLM architecture">
-          <svg class="stage" viewBox="0 0 1200 720" role="img" aria-labelledby="stage-title stage-desc">
+          <svg class="stage" viewBox="0 0 1260 720" role="img" aria-labelledby="stage-title stage-desc">
             <title id="stage-title">LLM architecture animation</title>
             <desc id="stage-desc">
               Vector animation showing tokens, attention, a dense feed-forward block, and a Mixture of Experts router.
@@ -174,7 +174,7 @@
             <g class="standard-layer">
               <rect x="880" y="102" width="136" height="224" rx="20" class="dense-shell" />
               <text x="908" y="82" class="zone-title">Dense FFN</text>
-              <text x="890" y="356" class="microcopy">Все параметры FFN активируются для каждого токена.</text>
+              <text x="890" y="356" class="microcopy">Активен весь FFN-блок.</text>
               <g class="neuron-grid">
                 <circle cx="922" cy="150" r="12" />
                 <circle cx="972" cy="150" r="12" />
@@ -216,7 +216,7 @@
                   <text x="-31" y="19" class="expert-score">0.00</text>
                 </g>
               </g>
-              <text x="874" y="608" class="microcopy">Токен идет только в выбранные FFN-эксперты. Остальные не считают.</text>
+              <text x="874" y="608" class="microcopy">Считают только выбранные эксперты.</text>
             </g>
 
             <g class="decoder-block">

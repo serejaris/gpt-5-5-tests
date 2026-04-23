@@ -13,6 +13,7 @@
 | [`llm-moe-vector-animation`](./llm-moe-vector-animation) | Векторная SVG-анимация: как LLM обрабатывает токены и чем MoE отличается от плотной архитектуры. | Vanilla JS · SVG |
 | [`peacock-bike-pixar`](./peacock-bike-pixar) | Pixar-style павлин на велосипеде в одном HTML-файле — Peacock Test. | Vanilla JS · CSS |
 | [`ramp-bucket-experiment`](./ramp-bucket-experiment) | Matter.js-симуляция: шарик скатывается по рампе с изменяемым углом в одно из 3 вёдер. | Matter.js · Canvas |
+| [`first-person-dungeon-crawler`](./first-person-dungeon-crawler) | Dungeon crawler «Vault of Ashenford» в духе 90-х: raycast-стены, город-хаб, бой, инвентарь. | Vanilla JS · Canvas · Vite |
 
 ## Run локально
 
