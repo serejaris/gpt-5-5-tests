@@ -8,7 +8,7 @@ Original browser dungeon crawler inspired by 1990s first-person party RPGs.
 - One town hub, Ashenford, and one explorable dungeon, Cinder Vault.
 - Party HUD with health and mana bars.
 - Inventory, item selection, consumables, chests, shop, inn, temple, combat.
-- Generated bitmap assets under `public/assets`.
+- Generated bitmap assets under `src/assets`; original project copies also live under `public/assets`.
 
 ## Run
 
@@ -23,8 +23,8 @@ Controls: `WASD` or arrows, `Q/E` strafe, `Space` interact, `F` attack, `R` use 
 
 The art was generated with the built-in `imagegen` flow and then copied into this project:
 
-- `public/assets/dungeon-wall.png`
-- `public/assets/town-wall.png`
-- `public/assets/guardian.png`
-- `public/assets/party-portraits.png`
-- `public/assets/inventory-items.png`
+- `src/assets/dungeon-wall.png`
+- `src/assets/town-wall.png`
+- `src/assets/guardian.png`
+- `src/assets/party-portraits.png`
+- `src/assets/inventory-items.png`

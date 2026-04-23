@@ -269,7 +269,7 @@ h1 {
   width: 100%;
   height: 100%;
   display: block;
-  background-image: url("/assets/inventory-items.png");
+  background-image: var(--item-sheet);
   background-size: 400% 200%;
   image-rendering: pixelated;
 }
@@ -297,7 +297,7 @@ h1 {
   padding: 10px;
   background:
     linear-gradient(rgba(20, 17, 13, 0.9), rgba(20, 17, 13, 0.9)),
-    url("/assets/town-wall.png") center / 420px auto;
+    var(--town-wall) center / 420px auto;
 }
 
 .hero {
@@ -321,7 +321,7 @@ h1 {
   aspect-ratio: 1;
   border: 3px solid #5b5147;
   border-radius: 50%;
-  background-image: url("/assets/party-portraits.png");
+  background-image: var(--portrait-sheet);
   background-size: 400% 100%;
   background-repeat: no-repeat;
   image-rendering: pixelated;

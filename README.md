@@ -9,11 +9,11 @@
 | Папка | Что это | Стек |
 |-------|---------|------|
 | [`cozy-isometric-room`](./cozy-isometric-room) | Изометрическая 3D-комната с агентами и пайплайном задач. Генерится через Codex + GPT-5.5 Pro. | Three.js · Vite · TypeScript |
-| [`vampire-survivors-clone`](./vampire-survivors-clone) | Клон Vampire Survivors на чистом canvas — HUD, волны, апгрейды. | Vanilla JS · Canvas 2D |
+| [`vampire-survivors-clone`](./vampire-survivors-clone) | «Myuton Agent Run» — browser survival game + leaderboard на Node/Postgres. Деплой: [myuton-agent-run-web-production.up.railway.app](https://myuton-agent-run-web-production.up.railway.app/) | Vanilla JS · Canvas · Node · Railway |
+| [`first-person-dungeon-crawler`](./first-person-dungeon-crawler) | «Vault of Ashenford» — first-person dungeon crawler в духе 90-х: raycast-стены, город-хаб, бой, инвентарь. | Vanilla JS · Canvas · Vite |
 | [`llm-moe-vector-animation`](./llm-moe-vector-animation) | Векторная SVG-анимация: как LLM обрабатывает токены и чем MoE отличается от плотной архитектуры. | Vanilla JS · SVG |
 | [`peacock-bike-pixar`](./peacock-bike-pixar) | Pixar-style павлин на велосипеде в одном HTML-файле — Peacock Test. | Vanilla JS · CSS |
 | [`ramp-bucket-experiment`](./ramp-bucket-experiment) | Matter.js-симуляция: шарик скатывается по рампе с изменяемым углом в одно из 3 вёдер. | Matter.js · Canvas |
-| [`first-person-dungeon-crawler`](./first-person-dungeon-crawler) | Dungeon crawler «Vault of Ashenford» в духе 90-х: raycast-стены, город-хаб, бой, инвентарь. | Vanilla JS · Canvas · Vite |
 
 ## Run локально
 
@@ -29,6 +29,11 @@ npm run dev
 cd vampire-survivors-clone
 python3 -m http.server 5173   # любой статический сервер
 
+# first-person-dungeon-crawler
+cd first-person-dungeon-crawler
+npm install
+npm run dev
+
 # llm-moe-vector-animation
 cd llm-moe-vector-animation
 python3 -m http.server 5173   # или открой index.html напрямую
@@ -37,7 +42,7 @@ python3 -m http.server 5173   # или открой index.html напрямую
 ## Build всего для Vercel
 
 ```bash
-npm run build    # собирает cozy в dist/cozy-isometric-room, копирует vampire как статику
+npm run build    # собирает Vite demos и копирует static demos в dist/
 ```
 
-Vercel деплоит `dist/` как статический сайт. Корневой `index.html` — лендинг с ссылками на оба демо.
+Vercel деплоит `dist/` как статический сайт. Корневой `index.html` — лендинг с ссылками на демо.

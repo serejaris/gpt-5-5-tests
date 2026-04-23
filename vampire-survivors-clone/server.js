@@ -69,9 +69,13 @@ const getPool = async () => {
   if (!process.env.DATABASE_URL) return null;
   if (!poolPromise) {
     poolPromise = import("pg").then(async ({ Pool }) => {
+      const databaseUrl = new URL(process.env.DATABASE_URL);
+      const useSsl = process.env.PGSSLMODE === "disable" || databaseUrl.hostname.endsWith(".railway.internal")
+        ? false
+        : { rejectUnauthorized: false };
       const pool = new Pool({
         connectionString: process.env.DATABASE_URL,
-        ssl: process.env.PGSSLMODE === "disable" ? false : { rejectUnauthorized: false }
+        ssl: useSsl
       });
       await pool.query(`
         CREATE TABLE IF NOT EXISTS scores (

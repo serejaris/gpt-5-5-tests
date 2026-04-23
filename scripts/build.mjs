@@ -17,15 +17,7 @@ execSync('npm install --no-audit --no-fund --loglevel=error', { cwd: cozy, stdio
 execSync('npm run build', { cwd: cozy, stdio: 'inherit' })
 cpSync(resolve(cozy, 'dist'), resolve(dist, 'cozy-isometric-room'), { recursive: true })
 
-// vampire-survivors-clone → static copy
-const vampire = resolve(root, 'vampire-survivors-clone')
-console.log('> copying vampire-survivors-clone')
-const vampireOut = resolve(dist, 'vampire-survivors-clone')
-mkdirSync(vampireOut, { recursive: true })
-for (const entry of ['index.html', 'src', 'assets']) {
-  const from = resolve(vampire, entry)
-  if (existsSync(from)) cpSync(from, resolve(vampireOut, entry), { recursive: true })
-}
+// vampire-survivors-clone → deployed separately on Railway (has Node leaderboard server), skipped here
 
 // llm-moe-vector-animation → static copy
 const llmMoe = resolve(root, 'llm-moe-vector-animation')

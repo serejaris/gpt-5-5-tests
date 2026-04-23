@@ -1,4 +1,9 @@
 import './styles.css'
+import dungeonWallUrl from './assets/dungeon-wall.png'
+import guardianUrl from './assets/guardian.png'
+import inventoryItemsUrl from './assets/inventory-items.png'
+import partyPortraitsUrl from './assets/party-portraits.png'
+import townWallUrl from './assets/town-wall.png'
 
 const VIEW_W = 960
 const VIEW_H = 600
@@ -24,12 +29,16 @@ const els = {
 }
 
 const textureSources = {
-  dungeon: '/assets/dungeon-wall.png',
-  town: '/assets/town-wall.png',
-  guardian: '/assets/guardian.png',
-  portraits: '/assets/party-portraits.png',
-  items: '/assets/inventory-items.png'
+  dungeon: dungeonWallUrl,
+  town: townWallUrl,
+  guardian: guardianUrl,
+  portraits: partyPortraitsUrl,
+  items: inventoryItemsUrl
 }
+
+document.documentElement.style.setProperty('--item-sheet', `url("${inventoryItemsUrl}")`)
+document.documentElement.style.setProperty('--portrait-sheet', `url("${partyPortraitsUrl}")`)
+document.documentElement.style.setProperty('--town-wall', `url("${townWallUrl}")`)
 
 const maps = {
   town: {
@@ -226,6 +235,8 @@ function move(forward, strafe) {
 }
 
 function interact() {
+  const current = currentCell()
+  const currentTile = tileAtCell(game.area, current.x, current.y)
   const front = frontCell()
   const tile = tileAtCell(game.area, front.x, front.y)
   const enemy = enemyAt(front.x, front.y)
@@ -237,7 +248,7 @@ function interact() {
   }
 
   if (game.area === 'town') {
-    if (tile === 'D') {
+    if (tile === 'D' || currentTile === 'D') {
       switchArea('dungeon')
       return
     }
@@ -265,7 +276,7 @@ function interact() {
   }
 
   if (game.area === 'dungeon') {
-    if (tile === 'X') {
+    if (tile === 'X' || currentTile === 'X') {
       switchArea('town')
       return
     }
@@ -420,6 +431,13 @@ function frontCell() {
   return {
     x: Math.floor(game.player.x) + dir.x,
     y: Math.floor(game.player.y) + dir.y
+  }
+}
+
+function currentCell() {
+  return {
+    x: Math.floor(game.player.x),
+    y: Math.floor(game.player.y)
   }
 }
 
