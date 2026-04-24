@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Мьютон: Агентный Ран</title>
-  <link rel="stylesheet" href="./src/styles.css?v=4">
+  <link rel="stylesheet" href="./src/styles.css?v=7">
 </head>
 <body>
   <main id="game" aria-label="Игра Мьютон: Агентный Ран">
@@ -38,20 +38,32 @@
     <div id="pauseBadge" class="pause-badge hidden">Пауза</div>
 
     <section id="startOverlay" class="overlay start-overlay">
-      <div class="menu-panel">
-        <div class="title-block">
+      <div class="menu-panel start-panel">
+        <div class="title-block hero-block">
+          <p class="eyebrow">Агентная арена</p>
           <h1>Мьютон: Агентный Ран</h1>
-          <p class="subtitle">Мьютон застрял в песочнице агентов: собирай контекст, запускай модели, отбивайся от галлюцинаций и держи фокус как можно дольше.</p>
+          <p class="subtitle">Мьютон застрял в песочнице агентов: собирай CTX, запускай модели, держи фокус и отбивайся от галлюцинаций.</p>
+          <div class="button-row">
+            <button id="startBtn" class="primary-cta">Запустить Мьютона</button>
+          </div>
         </div>
-        <div class="leaderboard-panel">
-          <div class="panel-title">Таблица лидеров</div>
+
+        <div class="arsenal-panel">
+          <div class="panel-title-row">
+            <div class="panel-title">Арсенал и способности</div>
+            <span>8 апгрейдов</span>
+          </div>
+          <div id="menuArsenal" class="arsenal-grid"></div>
+        </div>
+
+        <div class="leaderboard-panel leaderboard-featured">
+          <div class="panel-title-row">
+            <div class="panel-title">Таблица лидеров</div>
+            <span>top 10</span>
+          </div>
           <ol id="menuLeaderboard" class="leaderboard-list">
             <li>Загрузка...</li>
           </ol>
-        </div>
-        <div class="button-row">
-          <button id="startBtn">Начать ран</button>
-          <button id="debugBtn" class="secondary">Debug</button>
         </div>
       </div>
     </section>
@@ -79,7 +91,10 @@
           <p id="scoreStatus" class="form-status" aria-live="polite"></p>
         </form>
         <div class="leaderboard-panel">
-          <div class="panel-title">Лучшие раны</div>
+          <div class="panel-title-row">
+            <div class="panel-title">Лучшие раны</div>
+            <span>top 10</span>
+          </div>
           <ol id="gameOverLeaderboard" class="leaderboard-list">
             <li>Загрузка...</li>
           </ol>
@@ -93,13 +108,14 @@
   </main>
 
   <script defer src="./src/math.js?v=4"></script>
-  <script defer src="./src/state.js?v=4"></script>
+  <script defer src="./src/state.js?v=5"></script>
   <script defer src="./src/assets.js?v=4"></script>
+  <script defer src="./src/weaponCatalog.js?v=5"></script>
   <script defer src="./src/leaderboard.js?v=4"></script>
   <script defer src="./src/input.js?v=4"></script>
-  <script defer src="./src/simulation.js?v=4"></script>
-  <script defer src="./src/renderer.js?v=4"></script>
-  <script defer src="./src/ui.js?v=4"></script>
-  <script defer src="./src/main.js?v=4"></script>
+  <script defer src="./src/simulation.js?v=6"></script>
+  <script defer src="./src/renderer.js?v=5"></script>
+  <script defer src="./src/ui.js?v=7"></script>
+  <script defer src="./src/main.js?v=5"></script>
 </body>
 </html>

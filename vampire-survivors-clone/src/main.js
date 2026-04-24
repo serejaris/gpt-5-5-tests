@@ -14,9 +14,7 @@
   let input;
 
   const resetRun = () => {
-    const keepDebug = game.debug;
     Object.assign(game, createState());
-    game.debug = keepDebug;
     renderer.resize();
     ui.updateHud(true);
   };
@@ -75,9 +73,6 @@
       });
       game.scoreSubmitted = true;
       return result;
-    },
-    toggleDebug: () => {
-      game.debug = !game.debug;
     },
     startFromMenu: () => {
       if (game.mode === "menu") startRun();

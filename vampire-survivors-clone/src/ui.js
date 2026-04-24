@@ -1,6 +1,7 @@
 (() => {
   const { clamp, formatTime } = window.Nightbound.Math;
   const { currentWave } = window.Nightbound.Simulation;
+  const { getWeapon, menuWeapons } = window.Nightbound.WeaponCatalog;
 
   const createUi = (game, actions) => {
     const ui = {
@@ -23,13 +24,13 @@
       playerName: document.getElementById("playerName"),
       submitScoreBtn: document.getElementById("submitScoreBtn"),
       scoreStatus: document.getElementById("scoreStatus"),
+      menuArsenal: document.getElementById("menuArsenal"),
       menuLeaderboard: document.getElementById("menuLeaderboard"),
       gameOverLeaderboard: document.getElementById("gameOverLeaderboard"),
       pauseBadge: document.getElementById("pauseBadge"),
       startBtn: document.getElementById("startBtn"),
       restartBtn: document.getElementById("restartBtn"),
-      menuBtn: document.getElementById("menuBtn"),
-      debugBtn: document.getElementById("debugBtn")
+      menuBtn: document.getElementById("menuBtn")
     };
 
     let lastRunStats = null;
@@ -43,17 +44,49 @@
     const showMenu = () => {
       hideAllOverlays();
       ui.startOverlay.classList.remove("hidden");
+      renderMenuArsenal();
       refreshLeaderboards();
+    };
+
+    const renderMenuArsenal = () => {
+      ui.menuArsenal.innerHTML = menuWeapons.map((key) => {
+        const weapon = getWeapon(key);
+        return `
+          <article class="arsenal-card" style="--weapon-accent:${weapon.accent}; --weapon-accent-soft:${hexToRgba(weapon.accent, 0.14)}">
+            <img src="${weapon.icon}" alt="" class="arsenal-icon">
+            <div>
+              <div class="arsenal-head">
+                <strong>${weapon.name}</strong>
+                <span>${weapon.tag}</span>
+              </div>
+              <p>${weapon.menuEffect}</p>
+            </div>
+          </article>
+        `;
+      }).join("");
     };
 
     const showLevelUp = (upgrades) => {
       ui.upgradeGrid.innerHTML = "";
       upgrades.forEach((upgrade, index) => {
+        const weapon = getWeapon(upgrade.icon);
         const card = document.createElement("button");
         card.className = "upgrade-card";
+        card.style.setProperty("--upgrade-accent", weapon.accent);
+        card.style.setProperty("--upgrade-accent-soft", hexToRgba(weapon.accent, 0.16));
+        card.style.setProperty("--upgrade-accent-glow", hexToRgba(weapon.accent, 0.28));
         card.innerHTML = `
-          <span class="upgrade-name">${upgrade.name}</span>
-          <span class="upgrade-desc">${upgrade.desc}</span>
+          <span class="upgrade-media">
+            <img src="${weapon.icon}" alt="" class="upgrade-icon">
+            <span>
+              <span class="upgrade-name">${upgrade.name}</span>
+              <span class="upgrade-family">${upgrade.tag}</span>
+            </span>
+          </span>
+          <span class="upgrade-effect">
+            <span class="effect-label">Эффект</span>
+            <span>${upgrade.effect}</span>
+          </span>
           <span class="upgrade-tag">${upgrade.tag}</span>
         `;
         card.addEventListener("click", () => actions.chooseUpgrade(index));
@@ -82,16 +115,18 @@
 
     const renderLeaderboard = (target, scores) => {
       if (!scores.length) {
-        target.innerHTML = "<li>Пока нет результатов</li>";
+        target.innerHTML = "<li class=\"leaderboard-empty\">Пока нет результатов. Первый ран попадет сюда.</li>";
         return;
       }
 
       target.innerHTML = scores.slice(0, 10).map((entry, index) => `
-        <li>
+        <li class="leaderboard-entry ${index === 0 ? "top-run" : ""} rank-${index + 1}">
           <span class="rank">#${index + 1}</span>
-          <span class="leader-name">${escapeHtml(entry.name)}</span>
-          <strong>${Number(entry.score).toLocaleString("ru-RU")}</strong>
-          <span class="leader-meta">${formatTime(entry.survivedSeconds)} · ур. ${entry.level} · ${entry.kills} сбоев</span>
+          <span class="leader-main">
+            <span class="leader-name">${escapeHtml(entry.name)}</span>
+            <span class="leader-meta">${formatTime(entry.survivedSeconds)} · ур. ${entry.level} · ${entry.kills} сбоев</span>
+          </span>
+          <strong class="leader-score">${Number(entry.score).toLocaleString("ru-RU")}</strong>
         </li>
       `).join("");
     };
@@ -119,11 +154,20 @@
         updateHud.lastTick = hudTick;
         const w = game.weapons;
         const rows = [
-          ["GPT-разряд", `L${w.bolt.level} · x${w.bolt.count}`],
-          ["RAG-щит", `L${w.pulse.level} · ${Math.round(w.pulse.radius)}ctx`],
-          ["Оркестратор", w.blade.count ? `L${w.blade.level} · x${w.blade.count}` : "Закрыт"]
+          ["gptBurst", "GPT-разряд", `L${w.bolt.level} · x${w.bolt.count}`],
+          ["ragShield", "RAG-щит", `L${w.pulse.level} · ${Math.round(w.pulse.radius)}ctx`],
+          ["orchestrator", "Оркестратор", w.blade.count ? `L${w.blade.level} · x${w.blade.count}` : "Закрыт"]
         ];
-        const html = rows.map(([name, value]) => `<div class="weapon-row"><strong>${name}</strong><span>${value}</span></div>`).join("");
+        const html = rows.map(([iconKey, name, value]) => {
+          const weapon = getWeapon(iconKey);
+          return `
+            <div class="weapon-row" style="--weapon-accent:${weapon.accent}; --weapon-accent-soft:${hexToRgba(weapon.accent, 0.15)}">
+              <img src="${weapon.icon}" alt="" class="weapon-icon">
+              <strong>${name}</strong>
+              <span>${value}</span>
+            </div>
+          `;
+        }).join("");
         if (html !== updateHud.lastWeaponText) {
           ui.weaponList.innerHTML = html;
           updateHud.lastWeaponText = html;
@@ -162,7 +206,7 @@
     ui.startBtn.addEventListener("click", actions.startRun);
     ui.restartBtn.addEventListener("click", actions.startRun);
     ui.menuBtn.addEventListener("click", actions.setMenu);
-    ui.debugBtn.addEventListener("click", actions.toggleDebug);
+    renderMenuArsenal();
 
     return {
       hideAllOverlays,
@@ -181,6 +225,17 @@
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+
+  const hexToRgba = (hex, alpha) => {
+    const normalized = hex.replace("#", "");
+    const value = parseInt(normalized.length === 3
+      ? normalized.split("").map((char) => char + char).join("")
+      : normalized, 16);
+    const r = (value >> 16) & 255;
+    const g = (value >> 8) & 255;
+    const b = value & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
 
   window.Nightbound = window.Nightbound || {};
   window.Nightbound.Ui = { createUi };

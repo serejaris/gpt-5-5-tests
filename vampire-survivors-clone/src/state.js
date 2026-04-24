@@ -1,7 +1,6 @@
 (() => {
   const createState = () => ({
     mode: "menu",
-    debug: false,
     lastFrame: 0,
     dt: 0,
     elapsed: 0,

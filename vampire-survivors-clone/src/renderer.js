@@ -38,7 +38,6 @@
       drawParticles();
       drawFloatingText();
       if (input.pointerDown) drawTouchStick();
-      if (game.debug) drawDebug();
       ctx.restore();
     };
 
@@ -312,18 +311,6 @@
       ctx.beginPath();
       ctx.arc(input.startX + Math.cos(a) * len, input.startY + Math.sin(a) * len, 16, 0, TAU);
       ctx.fill();
-      ctx.restore();
-    };
-
-    const drawDebug = () => {
-      ctx.save();
-      ctx.fillStyle = "rgba(0,0,0,0.48)";
-      ctx.fillRect(12, game.height - 92, 210, 68);
-      ctx.fillStyle = "#f4f7fb";
-      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, monospace";
-      ctx.fillText(`enemies: ${game.enemies.length}`, 24, game.height - 68);
-      ctx.fillText(`bullets: ${game.bullets.length}`, 24, game.height - 50);
-      ctx.fillText(`gems: ${game.gems.length}`, 24, game.height - 32);
       ctx.restore();
     };
 
