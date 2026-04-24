@@ -10,6 +10,7 @@ const PORT = Number(process.env.PORT || 3000);
 const DATA_DIR = path.join(ROOT, "data");
 const SCORES_FILE = path.join(DATA_DIR, "scores.json");
 const MAX_BODY_BYTES = 16 * 1024;
+const MODEL_KEYS = new Set(["gpt55", "opus", "kimi"]);
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -37,6 +38,11 @@ const json = (res, status, body) => {
 
 const notFound = (res) => json(res, 404, { error: "Not found" });
 
+const normalizeModelKey = (key) => {
+  const value = String(key || "");
+  return MODEL_KEYS.has(value) ? value : "";
+};
+
 const normalizeScore = (entry) => {
   const rawName = String(entry.name || "").trim();
   const name = rawName
@@ -51,7 +57,8 @@ const normalizeScore = (entry) => {
     kills: clampInt(entry.kills, 0, 999999),
     level: clampInt(entry.level, 1, 9999),
     wave: clampInt(entry.wave, 1, 9999),
-    survivedSeconds: clampInt(entry.survivedSeconds, 0, 86400)
+    survivedSeconds: clampInt(entry.survivedSeconds, 0, 86400),
+    modelKey: normalizeModelKey(entry.modelKey)
   };
 };
 
@@ -89,6 +96,7 @@ const getPool = async () => {
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
       `);
+      await pool.query("ALTER TABLE scores ADD COLUMN IF NOT EXISTS model_key TEXT");
       await pool.query("CREATE INDEX IF NOT EXISTS scores_rank_idx ON scores (score DESC, survived_seconds DESC, created_at ASC)");
       return pool;
     });
@@ -100,7 +108,7 @@ const listScores = async () => {
   const pool = await getPool();
   if (pool) {
     const result = await pool.query(`
-      SELECT id, name, score, kills, level, wave, survived_seconds AS "survivedSeconds", created_at AS "createdAt"
+      SELECT id, name, score, kills, level, wave, survived_seconds AS "survivedSeconds", model_key AS "modelKey", created_at AS "createdAt"
       FROM scores
       ORDER BY score DESC, survived_seconds DESC, created_at ASC
       LIMIT 20
@@ -123,25 +131,23 @@ const saveScore = async (entry) => {
 
   if (pool) {
     const result = await pool.query(`
-      INSERT INTO scores (name, score, kills, level, wave, survived_seconds)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id, name, score, kills, level, wave, survived_seconds AS "survivedSeconds", created_at AS "createdAt"
-    `, [score.name, score.score, score.kills, score.level, score.wave, score.survivedSeconds]);
+      INSERT INTO scores (name, score, kills, level, wave, survived_seconds, model_key)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id, name, score, kills, level, wave, survived_seconds AS "survivedSeconds", model_key AS "modelKey", created_at AS "createdAt"
+    `, [score.name, score.score, score.kills, score.level, score.wave, score.survivedSeconds, score.modelKey || null]);
     return result.rows[0];
   }
 
   await fs.mkdir(DATA_DIR, { recursive: true });
   const current = await listScores();
-  const next = sortScores([
-    {
-      id: Date.now().toString(36),
-      ...score,
-      createdAt: new Date().toISOString()
-    },
-    ...current
-  ]);
+  const saved = {
+    id: Date.now().toString(36),
+    ...score,
+    createdAt: new Date().toISOString()
+  };
+  const next = sortScores([saved, ...current]);
   await fs.writeFile(SCORES_FILE, JSON.stringify(next, null, 2));
-  return next[0];
+  return saved;
 };
 
 const readJsonBody = (req) => new Promise((resolve, reject) => {

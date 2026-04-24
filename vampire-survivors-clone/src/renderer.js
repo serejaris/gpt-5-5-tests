@@ -22,6 +22,14 @@
 
     const screenX = (worldX) => worldX - game.camera.x + game.width / 2;
     const screenY = (worldY) => worldY - game.camera.y + game.height / 2;
+    const colorWithAlpha = (hex, alpha) => {
+      const value = hex.replace("#", "");
+      const full = value.length === 3 ? value.split("").map((char) => char + char).join("") : value;
+      const r = parseInt(full.slice(0, 2), 16);
+      const g = parseInt(full.slice(2, 4), 16);
+      const b = parseInt(full.slice(4, 6), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    };
 
     const draw = () => {
       const shakeX = game.shake ? rand(-game.shake, game.shake) : 0;
@@ -30,6 +38,7 @@
       ctx.translate(shakeX, shakeY);
       drawBackground();
       drawGems();
+      drawPerkDrops();
       drawPulse();
       drawBullets();
       drawEnemies();
@@ -107,9 +116,10 @@
       const p = game.player;
       const x = screenX(p.x);
       const y = screenY(p.y);
+      const accent = game.modelAccent || "#63d7ff";
       const glow = ctx.createRadialGradient(x, y, 2, x, y, 42);
-      glow.addColorStop(0, "rgba(99,215,255,0.42)");
-      glow.addColorStop(1, "rgba(99,215,255,0)");
+      glow.addColorStop(0, colorWithAlpha(accent, 0.42));
+      glow.addColorStop(1, colorWithAlpha(accent, 0));
       ctx.fillStyle = glow;
       ctx.beginPath();
       ctx.arc(x, y, 42, 0, TAU);
@@ -142,7 +152,7 @@
       ctx.arc(0, -9, 9, 0, TAU);
       ctx.fill();
 
-      ctx.fillStyle = "#54d889";
+      ctx.fillStyle = accent;
       ctx.beginPath();
       ctx.moveTo(0, -25);
       ctx.lineTo(9, -7);
@@ -227,8 +237,44 @@
       }
     };
 
+    const drawPerkDrops = () => {
+      for (const drop of game.perkDrops) {
+        const x = screenX(drop.x);
+        const y = screenY(drop.y);
+        const s = drop.r + Math.sin(drop.pulse) * 1.8;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(drop.pulse * 0.38);
+        ctx.shadowColor = "#ffb86b";
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = "rgba(255,184,107,0.18)";
+        ctx.strokeStyle = "#ffb86b";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = -Math.PI / 2 + (i / 6) * TAU;
+          const px = Math.cos(a) * s;
+          const py = Math.sin(a) * s;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = "#ffd166";
+        ctx.fillRect(-s * 0.34, -s * 0.34, s * 0.68, s * 0.68);
+        ctx.strokeStyle = "rgba(7,16,23,0.72)";
+        ctx.strokeRect(-s * 0.34, -s * 0.34, s * 0.68, s * 0.68);
+        ctx.restore();
+      }
+    };
+
     const drawPulse = () => {
       const pulse = game.weapons.pulse;
+      if (!pulse.active) return;
       const t = clamp(pulse.timer / pulse.cooldown, 0, 1);
       const alpha = (1 - t) * 0.18;
       const p = game.player;
@@ -241,7 +287,7 @@
 
     const drawBlades = () => {
       const blade = game.weapons.blade;
-      if (blade.count <= 0) return;
+      if (!blade.active || blade.count <= 0) return;
       const p = game.player;
       for (let i = 0; i < blade.count; i++) {
         const a = blade.spin + (i / blade.count) * TAU;

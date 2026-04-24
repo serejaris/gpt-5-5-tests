@@ -92,6 +92,25 @@
       .slice(0, count);
   };
 
+  const unlockBolt = (w) => {
+    w.bolt.active = true;
+    w.bolt.level = Math.max(1, w.bolt.level);
+    w.bolt.count = Math.max(1, w.bolt.count);
+    w.bolt.timer = 0;
+  };
+
+  const unlockPulse = (w) => {
+    w.pulse.active = true;
+    w.pulse.level = Math.max(1, w.pulse.level);
+    w.pulse.timer = 0;
+  };
+
+  const unlockBlade = (w) => {
+    w.blade.active = true;
+    w.blade.level = Math.max(1, w.blade.level);
+    w.blade.count = Math.max(1, w.blade.count);
+  };
+
   const fireBolt = (game, target) => {
     const p = game.player;
     const w = game.weapons.bolt;
@@ -112,32 +131,36 @@
 
   const updateWeapons = (game, dt) => {
     const bolt = game.weapons.bolt;
-    bolt.timer -= dt;
-    if (bolt.timer <= 0 && game.enemies.length) {
-      nearestEnemies(game, bolt.count).forEach((target) => fireBolt(game, target));
-      bolt.timer = bolt.cooldown;
+    if (bolt.active) {
+      bolt.timer -= dt;
+      if (bolt.timer <= 0 && game.enemies.length) {
+        nearestEnemies(game, bolt.count).forEach((target) => fireBolt(game, target));
+        bolt.timer = bolt.cooldown;
+      }
     }
 
     const pulse = game.weapons.pulse;
-    pulse.timer -= dt;
-    if (pulse.timer <= 0) {
-      let hitAny = false;
-      const p = game.player;
-      for (const e of game.enemies) {
-        if (distSq(e.x, e.y, p.x, p.y) < (pulse.radius + e.r) ** 2) {
-          damageEnemy(game, e, pulse.damage, "#54d889");
-          hitAny = true;
+    if (pulse.active) {
+      pulse.timer -= dt;
+      if (pulse.timer <= 0) {
+        let hitAny = false;
+        const p = game.player;
+        for (const e of game.enemies) {
+          if (distSq(e.x, e.y, p.x, p.y) < (pulse.radius + e.r) ** 2) {
+            damageEnemy(game, e, pulse.damage, "#54d889");
+            hitAny = true;
+          }
         }
+        if (hitAny) {
+          ringParticles(game, p.x, p.y, pulse.radius, "#54d889", 22);
+          game.shake = Math.max(game.shake, 2);
+        }
+        pulse.timer = pulse.cooldown;
       }
-      if (hitAny) {
-        ringParticles(game, p.x, p.y, pulse.radius, "#54d889", 22);
-        game.shake = Math.max(game.shake, 2);
-      }
-      pulse.timer = pulse.cooldown;
     }
 
     const blade = game.weapons.blade;
-    if (blade.count > 0) {
+    if (blade.active && blade.count > 0) {
       blade.spin += dt * (2.7 + blade.level * 0.2);
       const p = game.player;
       for (const e of game.enemies) {
@@ -235,6 +258,7 @@
       if (e.hp <= 0) {
         game.player.kills += 1;
         spawnGem(game, e.x, e.y, e.xp);
+        maybeSpawnPerkDrop(game, e);
         burstParticles(game, e.x, e.y, e.color, 14);
         game.shake = Math.max(game.shake, 3);
       } else {
@@ -252,6 +276,30 @@
       vy: rand(-30, 30),
       r: 5 + Math.min(4, value / 8),
       value,
+      pulse: rand(0, TAU)
+    });
+  };
+
+  const maybeSpawnPerkDrop = (game, enemy) => {
+    if (game.perkDrops.length >= 3) return;
+    const chances = {
+      wisp: 0.008,
+      shade: 0.012,
+      knight: 0.09,
+      brute: 0.18
+    };
+    if (Math.random() < (chances[enemy.kind] || 0.01)) {
+      spawnPerkDrop(game, enemy.x, enemy.y);
+    }
+  };
+
+  const spawnPerkDrop = (game, x, y) => {
+    game.perkDrops.push({
+      x: x + rand(-10, 10),
+      y: y + rand(-10, 10),
+      vx: rand(-22, 22),
+      vy: rand(-22, 22),
+      r: 12,
       pulse: rand(0, TAU)
     });
   };
@@ -286,6 +334,30 @@
     game.gems = remaining;
   };
 
+  const updatePerkDrops = (game, dt) => {
+    const p = game.player;
+    const remaining = [];
+
+    for (const drop of game.perkDrops) {
+      drop.pulse += dt * 4.6;
+      drop.vx *= Math.pow(0.12, dt);
+      drop.vy *= Math.pow(0.12, dt);
+      drop.x += drop.vx * dt;
+      drop.y += drop.vy * dt;
+
+      if (distSq(drop.x, drop.y, p.x, p.y) < (drop.r + p.r + 8) ** 2) {
+        game.upgradesPending += 1;
+        addFloater(game, p.x, p.y - 44, "+LoRA-модуль", "#ffb86b");
+        burstParticles(game, drop.x, drop.y, "#ffb86b", 24);
+        game.shake = Math.max(game.shake, 2);
+      } else {
+        remaining.push(drop);
+      }
+    }
+
+    game.perkDrops = remaining;
+  };
+
   const addXp = (game, amount) => {
     const p = game.player;
     p.xp += amount;
@@ -300,8 +372,9 @@
   const rollUpgrades = (game) => {
     const p = game.player;
     const w = game.weapons;
-    const options = [
-      {
+    const options = [];
+
+    options.push(w.bolt.active ? {
         name: "GPT-разряд",
         tag: "Модель",
         icon: "gptBurst",
@@ -311,8 +384,17 @@
           w.bolt.damage += 8;
           w.bolt.cooldown = Math.max(0.34, w.bolt.cooldown - 0.045);
         }
-      },
-      {
+      } : {
+        name: "GPT-разряд",
+        tag: "Модель",
+        icon: "gptBurst",
+        kind: "unlock",
+        effect: "Открывает авторазряд по ближайшему сбою. Базово стреляет одним токен-снарядом.",
+        apply: () => unlockBolt(w)
+      });
+
+    if (w.bolt.active) {
+      options.push({
         name: "Параллельный инференс",
         tag: "Модель",
         icon: "parallelInference",
@@ -322,8 +404,10 @@
           w.bolt.count += 1;
           w.bolt.cooldown += 0.04;
         }
-      },
-      {
+      });
+    }
+
+    options.push(w.pulse.active ? {
         name: "RAG-щит",
         tag: "Контекст",
         icon: "ragShield",
@@ -333,8 +417,17 @@
           w.pulse.damage += 6;
           w.pulse.cooldown = Math.max(0.48, w.pulse.cooldown - 0.035);
         }
-      },
-      {
+      } : {
+        name: "RAG-щит",
+        tag: "Контекст",
+        icon: "ragShield",
+        kind: "unlock",
+        effect: "Открывает контекстную ауру. Она периодически бьет всех сбоев рядом.",
+        apply: () => unlockPulse(w)
+      });
+
+    if (w.pulse.active) {
+      options.push({
         name: "Длинное окно",
         tag: "Контекст",
         icon: "longWindow",
@@ -343,19 +436,30 @@
           w.pulse.level += 1;
           w.pulse.radius += 24;
         }
-      },
-      {
-        name: w.blade.count ? "Сабагент" : "Оркестратор",
+      });
+    }
+
+    options.push(w.blade.active ? {
+        name: "Сабагент",
         tag: "Агент",
         icon: "orchestrator",
-        effect: w.blade.count ? "+1 орбитальный сабагент. Урон каждого агента +5." : "Открывает орбитального агента. Он бьет врагов рядом с Мьютоном.",
+        effect: "+1 орбитальный сабагент. Урон каждого агента +5.",
         apply: () => {
           w.blade.level += 1;
           w.blade.count = Math.min(8, w.blade.count + 1);
           w.blade.damage += 5;
-          w.blade.radius += w.blade.count === 1 ? 0 : 5;
+          w.blade.radius += 5;
         }
-      },
+      } : {
+        name: "Оркестратор",
+        tag: "Агент",
+        icon: "orchestrator",
+        kind: "unlock",
+        effect: "Открывает орбитального агента. Он крутится вокруг Мьютона и режет сбоев касанием.",
+        apply: () => unlockBlade(w)
+      });
+
+    options.push(
       {
         name: "Быстрый роутинг",
         tag: "Ядро",
@@ -384,7 +488,8 @@
           p.hp = Math.min(p.maxHp, p.hp + 38);
         }
       }
-    ];
+    );
+
     const picked = [];
     const pool = [...options];
     while (picked.length < 3 && pool.length) {
@@ -417,7 +522,8 @@
       survivedSeconds,
       kills: game.player.kills,
       level: game.player.level,
-      wave
+      wave,
+      modelKey: game.modelKey
     };
   };
 
@@ -499,6 +605,7 @@
     updateBullets(game, dt);
     updateEnemies(game, dt);
     updateGems(game, dt);
+    updatePerkDrops(game, dt);
     cleanupDeadEnemies(game);
     updateParticles(game, dt);
   };

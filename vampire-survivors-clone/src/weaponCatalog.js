@@ -67,6 +67,14 @@
   };
 
   const getWeapon = (key) => weapons[key] || weapons.gptBurst;
+
+  const arsenalGroups = [
+    { tag: "Модель", title: "Модели" },
+    { tag: "Контекст", title: "Контекст" },
+    { tag: "Агент", title: "Агенты" },
+    { tag: "Ядро", title: "Ядро" }
+  ];
+
   const menuWeapons = [
     "gptBurst",
     "parallelInference",
@@ -78,6 +86,44 @@
     "humanLoop"
   ];
 
+  const models = {
+    gpt55: {
+      key: "gpt55",
+      name: "GPT-5.5",
+      weaponKey: "gptBurst",
+      icon: weapons.gptBurst.icon,
+      accent: weapons.gptBurst.accent,
+      description: "Быстрый разряд по ближайшим сбоям. Хороший старт для агрессивного рана."
+    },
+    opus: {
+      key: "opus",
+      name: "Opus",
+      weaponKey: "orchestrator",
+      icon: weapons.orchestrator.icon,
+      accent: weapons.orchestrator.accent,
+      description: "Начинает с орбитального агента. Сильнее держит ближнюю зону вокруг Мьютона."
+    },
+    kimi: {
+      key: "kimi",
+      name: "Kimi",
+      weaponKey: "ragShield",
+      icon: weapons.ragShield.icon,
+      accent: weapons.ragShield.accent,
+      description: "Стартует с RAG-щитом. Прощает ошибки и лучше чистит плотные волны."
+    }
+  };
+
+  const modelList = ["gpt55", "opus", "kimi"];
+  const getModel = (key) => models[key] || models.gpt55;
+
   window.Nightbound = window.Nightbound || {};
-  window.Nightbound.WeaponCatalog = { weapons, getWeapon, menuWeapons };
+  window.Nightbound.WeaponCatalog = {
+    weapons,
+    getWeapon,
+    arsenalGroups,
+    menuWeapons,
+    models,
+    modelList,
+    getModel
+  };
 })();

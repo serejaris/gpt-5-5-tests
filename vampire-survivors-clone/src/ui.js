@@ -1,7 +1,13 @@
 (() => {
   const { clamp, formatTime } = window.Nightbound.Math;
   const { currentWave } = window.Nightbound.Simulation;
-  const { getWeapon, menuWeapons } = window.Nightbound.WeaponCatalog;
+  const {
+    getWeapon,
+    menuWeapons,
+    arsenalGroups,
+    modelList,
+    getModel
+  } = window.Nightbound.WeaponCatalog;
 
   const createUi = (game, actions) => {
     const ui = {
@@ -24,6 +30,7 @@
       playerName: document.getElementById("playerName"),
       submitScoreBtn: document.getElementById("submitScoreBtn"),
       scoreStatus: document.getElementById("scoreStatus"),
+      modelChoices: document.getElementById("modelChoices"),
       menuArsenal: document.getElementById("menuArsenal"),
       menuLeaderboard: document.getElementById("menuLeaderboard"),
       gameOverLeaderboard: document.getElementById("gameOverLeaderboard"),
@@ -44,24 +51,66 @@
     const showMenu = () => {
       hideAllOverlays();
       ui.startOverlay.classList.remove("hidden");
+      renderModelChoices();
       renderMenuArsenal();
       refreshLeaderboards();
     };
 
-    const renderMenuArsenal = () => {
-      ui.menuArsenal.innerHTML = menuWeapons.map((key) => {
-        const weapon = getWeapon(key);
+    const renderModelChoices = () => {
+      const selected = actions.getSelectedModel();
+      ui.modelChoices.innerHTML = modelList.map((key) => {
+        const model = getModel(key);
+        const weapon = getWeapon(model.weaponKey);
+        const selectedClass = selected === model.key ? "selected" : "";
         return `
-          <article class="arsenal-card" style="--weapon-accent:${weapon.accent}; --weapon-accent-soft:${hexToRgba(weapon.accent, 0.14)}">
-            <img src="${weapon.icon}" alt="" class="arsenal-icon">
-            <div>
-              <div class="arsenal-head">
-                <strong>${weapon.name}</strong>
-                <span>${weapon.tag}</span>
-              </div>
-              <p>${weapon.menuEffect}</p>
+          <button type="button" class="model-card ${selectedClass}" data-model="${model.key}" style="--model-accent:${model.accent}; --model-accent-soft:${hexToRgba(model.accent, 0.15)}">
+            <span class="model-media">
+              <img src="${model.icon}" alt="" class="model-icon">
+            </span>
+            <span class="model-copy">
+              <strong>${model.name}</strong>
+              <span>Старт: ${weapon.name}</span>
+              <small>${model.description}</small>
+            </span>
+          </button>
+        `;
+      }).join("");
+
+      ui.modelChoices.querySelectorAll(".model-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          actions.selectModel(card.dataset.model);
+          renderModelChoices();
+        });
+      });
+    };
+
+    const renderMenuArsenal = () => {
+      ui.menuArsenal.innerHTML = arsenalGroups.map((group) => {
+        const items = menuWeapons.filter((key) => getWeapon(key).tag === group.tag);
+        return `
+          <section class="arsenal-section">
+            <div class="arsenal-section-title">
+              <strong>${group.title}</strong>
+              <span>${items.length}</span>
             </div>
-          </article>
+            <div class="arsenal-grid">
+              ${items.map((key) => {
+                const weapon = getWeapon(key);
+                return `
+                  <article class="arsenal-card" style="--weapon-accent:${weapon.accent}; --weapon-accent-soft:${hexToRgba(weapon.accent, 0.14)}">
+                    <img src="${weapon.icon}" alt="" class="arsenal-icon">
+                    <div>
+                      <div class="arsenal-head">
+                        <strong>${weapon.name}</strong>
+                        <span>${weapon.tag}</span>
+                      </div>
+                      <p>${weapon.menuEffect}</p>
+                    </div>
+                  </article>
+                `;
+              }).join("")}
+            </div>
+          </section>
         `;
       }).join("");
     };
@@ -84,7 +133,7 @@
             </span>
           </span>
           <span class="upgrade-effect">
-            <span class="effect-label">Эффект</span>
+            <span class="effect-label">${upgrade.kind === "unlock" ? "Открытие" : "Эффект"}</span>
             <span>${upgrade.effect}</span>
           </span>
           <span class="upgrade-tag">${upgrade.tag}</span>
@@ -101,7 +150,8 @@
 
     const showGameOver = (runStats) => {
       lastRunStats = runStats;
-      ui.runSummary.textContent = `Мьютон продержался ${formatTime(runStats.survivedSeconds)}, дошел до уровня ${runStats.level} и погасил ${runStats.kills} сбоев.`;
+      const model = runStats.modelKey ? getModel(runStats.modelKey).name : "выбранная модель";
+      ui.runSummary.textContent = `Мьютон (${model}) продержался ${formatTime(runStats.survivedSeconds)}, дошел до уровня ${runStats.level} и погасил ${runStats.kills} сбоев.`;
       ui.scoreText.textContent = `Счет: ${runStats.score.toLocaleString("ru-RU")}`;
       ui.scoreStatus.textContent = "";
       ui.playerName.value = localStorage.getItem("myuton-player-name") || "";
@@ -119,16 +169,25 @@
         return;
       }
 
-      target.innerHTML = scores.slice(0, 10).map((entry, index) => `
-        <li class="leaderboard-entry ${index === 0 ? "top-run" : ""} rank-${index + 1}">
-          <span class="rank">#${index + 1}</span>
-          <span class="leader-main">
-            <span class="leader-name">${escapeHtml(entry.name)}</span>
-            <span class="leader-meta">${formatTime(entry.survivedSeconds)} · ур. ${entry.level} · ${entry.kills} сбоев</span>
-          </span>
-          <strong class="leader-score">${Number(entry.score).toLocaleString("ru-RU")}</strong>
-        </li>
-      `).join("");
+      target.innerHTML = scores.slice(0, 10).map((entry, index) => {
+        const meta = [
+          entry.modelKey ? getModel(entry.modelKey).name : "",
+          formatTime(entry.survivedSeconds),
+          `ур. ${entry.level}`,
+          `${entry.kills} сбоев`
+        ].filter(Boolean).join(" · ");
+
+        return `
+          <li class="leaderboard-entry ${index === 0 ? "top-run" : ""} rank-${index + 1}">
+            <span class="rank">#${index + 1}</span>
+            <span class="leader-main">
+              <span class="leader-name">${escapeHtml(entry.name)}</span>
+              <span class="leader-meta">${meta}</span>
+            </span>
+            <strong class="leader-score">${Number(entry.score).toLocaleString("ru-RU")}</strong>
+          </li>
+        `;
+      }).join("");
     };
 
     const refreshLeaderboards = async () => {
@@ -153,11 +212,10 @@
       if (force || hudTick !== updateHud.lastTick) {
         updateHud.lastTick = hudTick;
         const w = game.weapons;
-        const rows = [
-          ["gptBurst", "GPT-разряд", `L${w.bolt.level} · x${w.bolt.count}`],
-          ["ragShield", "RAG-щит", `L${w.pulse.level} · ${Math.round(w.pulse.radius)}ctx`],
-          ["orchestrator", "Оркестратор", w.blade.count ? `L${w.blade.level} · x${w.blade.count}` : "Закрыт"]
-        ];
+        const rows = [];
+        if (w.bolt.active) rows.push(["gptBurst", "GPT-разряд", `L${w.bolt.level} · x${w.bolt.count}`]);
+        if (w.pulse.active) rows.push(["ragShield", "RAG-щит", `L${w.pulse.level} · ${Math.round(w.pulse.radius)}ctx`]);
+        if (w.blade.active) rows.push(["orchestrator", "Оркестратор", `L${w.blade.level} · x${w.blade.count}`]);
         const html = rows.map(([iconKey, name, value]) => {
           const weapon = getWeapon(iconKey);
           return `
@@ -203,9 +261,10 @@
       }
     });
 
-    ui.startBtn.addEventListener("click", actions.startRun);
-    ui.restartBtn.addEventListener("click", actions.startRun);
+    ui.startBtn.addEventListener("click", () => actions.startRun());
+    ui.restartBtn.addEventListener("click", () => actions.startRun());
     ui.menuBtn.addEventListener("click", actions.setMenu);
+    renderModelChoices();
     renderMenuArsenal();
 
     return {
@@ -215,7 +274,8 @@
       hideLevelUp,
       showGameOver,
       updateHud,
-      refreshLeaderboards
+      refreshLeaderboards,
+      renderModelChoices
     };
   };
 

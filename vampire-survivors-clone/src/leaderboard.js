@@ -1,6 +1,12 @@
 (() => {
   const STORAGE_KEY = "myuton-agent-run-leaderboard";
   const API_BASE = window.location.protocol === "file:" ? "http://localhost:3000" : "";
+  const MODEL_KEYS = new Set(["gpt55", "opus", "kimi"]);
+
+  const normalizeModelKey = (key) => {
+    const value = String(key || "");
+    return MODEL_KEYS.has(value) ? value : "";
+  };
 
   const normalizeScore = (entry) => ({
     id: entry.id || crypto.randomUUID(),
@@ -10,6 +16,7 @@
     level: Math.max(1, Math.floor(Number(entry.level) || 1)),
     wave: Math.max(1, Math.floor(Number(entry.wave) || 1)),
     survivedSeconds: Math.max(0, Math.floor(Number(entry.survivedSeconds) || 0)),
+    modelKey: normalizeModelKey(entry.modelKey),
     createdAt: entry.createdAt || new Date().toISOString()
   });
 

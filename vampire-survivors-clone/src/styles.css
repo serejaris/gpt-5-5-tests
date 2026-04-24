@@ -64,6 +64,7 @@ canvas {
 .stats,
 .weapons,
 .upgrade-card,
+.model-panel,
 .arsenal-panel,
 .leaderboard-panel,
 .menu-panel {
@@ -233,6 +234,7 @@ canvas {
   grid-template-columns: minmax(330px, 0.82fr) minmax(560px, 1.18fr);
   grid-template-areas:
     "hero arsenal"
+    "models arsenal"
     "leaders arsenal";
   gap: 16px;
 }
@@ -386,6 +388,13 @@ button:disabled {
     var(--panel);
 }
 
+.leaderboard-featured .leaderboard-list {
+  max-height: min(36vh, 360px);
+  overflow: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+}
+
 .panel-title {
   color: var(--text);
   font-size: 13px;
@@ -525,6 +534,91 @@ button:disabled {
   white-space: nowrap;
 }
 
+.model-panel {
+  grid-area: models;
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  background:
+    linear-gradient(135deg, rgba(99, 215, 255, 0.08), rgba(84, 216, 137, 0.04) 58%, rgba(255, 209, 102, 0.05)),
+    var(--panel);
+}
+
+.model-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.model-card {
+  min-height: 76px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  color: var(--text);
+  text-align: left;
+  border: 1px solid color-mix(in srgb, var(--model-accent) 30%, rgba(255, 255, 255, 0.10));
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, var(--model-accent-soft), rgba(255, 255, 255, 0.035)),
+    rgba(255, 255, 255, 0.035);
+  box-shadow: none;
+}
+
+.model-card.selected {
+  border-color: var(--model-accent);
+  background:
+    radial-gradient(circle at 8% 14%, var(--model-accent-soft), transparent 42%),
+    linear-gradient(90deg, color-mix(in srgb, var(--model-accent) 18%, rgba(255, 255, 255, 0.05)), rgba(255, 255, 255, 0.05));
+  box-shadow: 0 0 0 1px var(--model-accent-soft), 0 14px 34px rgba(0, 0, 0, 0.22);
+}
+
+.model-media {
+  display: block;
+}
+
+.model-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--model-accent);
+  box-shadow: 0 0 18px var(--model-accent-soft);
+}
+
+.model-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.model-copy strong {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.15;
+}
+
+.model-copy span {
+  color: var(--model-accent);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.model-copy small {
+  display: -webkit-box;
+  overflow: hidden;
+  color: rgba(244, 247, 251, 0.68);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 .arsenal-panel {
   grid-area: arsenal;
   border-radius: 8px;
@@ -537,6 +631,38 @@ button:disabled {
   align-content: start;
   align-items: start;
   gap: 12px;
+}
+
+.arsenal-sections {
+  display: grid;
+  gap: 14px;
+}
+
+.arsenal-section {
+  display: grid;
+  gap: 8px;
+}
+
+.arsenal-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: rgba(244, 247, 251, 0.82);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.arsenal-section-title span {
+  min-width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: rgba(244, 247, 251, 0.72);
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 10px;
 }
 
 .arsenal-grid {
@@ -605,6 +731,25 @@ button:disabled {
   line-height: 1.35;
 }
 
+@media (max-width: 1280px) and (min-width: 981px) {
+  .start-panel {
+    width: min(1120px, calc(100vw - 40px));
+    grid-template-columns: minmax(300px, 0.85fr) minmax(430px, 1fr);
+  }
+
+  .arsenal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .arsenal-card {
+    min-height: 82px;
+  }
+
+  .leaderboard-featured .leaderboard-list {
+    max-height: min(28vh, 280px);
+  }
+}
+
 @media (max-width: 980px) {
   .overlay {
     padding: 12px;
@@ -616,6 +761,7 @@ button:disabled {
     grid-template-columns: 1fr;
     grid-template-areas:
       "hero"
+      "models"
       "arsenal"
       "leaders";
   }
@@ -954,6 +1100,7 @@ input:focus {
     width: 100%;
   }
 
+  .model-panel,
   .arsenal-panel,
   .leaderboard-panel {
     padding: 10px;

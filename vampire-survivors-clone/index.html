@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Мьютон: Агентный Ран</title>
-  <link rel="stylesheet" href="./src/styles.css?v=9">
+  <link rel="stylesheet" href="./src/styles.css?v=10">
 </head>
 <body>
   <main id="game" aria-label="Игра Мьютон: Агентный Ран">
@@ -34,7 +34,7 @@
       <div class="weapons" id="weaponList"></div>
     </section>
 
-    <div class="help">Движение: WASD, стрелки или свайп. Модели и агенты атакуют автоматически. P — пауза.</div>
+    <div class="help">Движение: WASD, стрелки или свайп. Собирай CTX и LoRA-модули: они открывают апгрейды. P — пауза.</div>
     <div id="pauseBadge" class="pause-badge hidden">Пауза</div>
 
     <section id="startOverlay" class="overlay start-overlay">
@@ -48,12 +48,20 @@
           </div>
         </div>
 
+        <div class="model-panel">
+          <div class="panel-title-row">
+            <div class="panel-title">Стартовая модель</div>
+            <span>выбор билда</span>
+          </div>
+          <div id="modelChoices" class="model-grid"></div>
+        </div>
+
         <div class="arsenal-panel">
           <div class="panel-title-row">
             <div class="panel-title">Арсенал и способности</div>
             <span>8 апгрейдов</span>
           </div>
-          <div id="menuArsenal" class="arsenal-grid"></div>
+          <div id="menuArsenal" class="arsenal-sections"></div>
         </div>
 
         <div class="leaderboard-panel leaderboard-featured">
@@ -108,14 +116,14 @@
   </main>
 
   <script defer src="./src/math.js?v=4"></script>
-  <script defer src="./src/state.js?v=5"></script>
+  <script defer src="./src/state.js?v=6"></script>
   <script defer src="./src/assets.js?v=4"></script>
-  <script defer src="./src/weaponCatalog.js?v=5"></script>
-  <script defer src="./src/leaderboard.js?v=4"></script>
+  <script defer src="./src/weaponCatalog.js?v=6"></script>
+  <script defer src="./src/leaderboard.js?v=5"></script>
   <script defer src="./src/input.js?v=4"></script>
-  <script defer src="./src/simulation.js?v=6"></script>
-  <script defer src="./src/renderer.js?v=5"></script>
-  <script defer src="./src/ui.js?v=7"></script>
-  <script defer src="./src/main.js?v=5"></script>
+  <script defer src="./src/simulation.js?v=7"></script>
+  <script defer src="./src/renderer.js?v=6"></script>
+  <script defer src="./src/ui.js?v=8"></script>
+  <script defer src="./src/main.js?v=6"></script>
 </body>
 </html>

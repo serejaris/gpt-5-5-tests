@@ -3,24 +3,27 @@
   const { loadAssets } = window.Nightbound.Assets;
   const { createInput } = window.Nightbound.Input;
   const { createRenderer } = window.Nightbound.Renderer;
+  const { getModel } = window.Nightbound.WeaponCatalog;
   const Simulation = window.Nightbound.Simulation;
 
   const canvas = document.getElementById("canvas");
-  const game = createState();
+  let selectedModelKey = getModel(localStorage.getItem("myuton-model-key") || "gpt55").key;
+  const game = createState(selectedModelKey);
   const assets = loadAssets();
 
   let renderer;
   let ui;
   let input;
 
-  const resetRun = () => {
-    Object.assign(game, createState());
-    renderer.resize();
-    ui.updateHud(true);
+  const resetRun = (modelKey = selectedModelKey) => {
+    selectedModelKey = getModel(modelKey).key;
+    Object.assign(game, createState(selectedModelKey));
+    if (renderer) renderer.resize();
+    if (ui) ui.updateHud(true);
   };
 
   const startRun = () => {
-    resetRun();
+    resetRun(selectedModelKey);
     game.mode = "playing";
     ui.hideAllOverlays();
     game.lastFrame = performance.now();
@@ -65,6 +68,15 @@
     setMenu,
     chooseUpgrade,
     togglePause,
+    selectModel: (modelKey) => {
+      selectedModelKey = getModel(modelKey).key;
+      localStorage.setItem("myuton-model-key", selectedModelKey);
+      if (game.mode === "menu") {
+        resetRun(selectedModelKey);
+        game.mode = "menu";
+      }
+    },
+    getSelectedModel: () => selectedModelKey,
     submitScore: async (name, runStats) => {
       if (game.scoreSubmitted) throw new Error("Этот результат уже сохранен.");
       const result = await window.Nightbound.Leaderboard.submitScore({
