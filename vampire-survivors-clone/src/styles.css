@@ -533,12 +533,16 @@ button:disabled {
     linear-gradient(135deg, rgba(99, 215, 255, 0.06), rgba(255, 209, 102, 0.035) 54%, rgba(84, 216, 137, 0.045)),
     var(--panel);
   display: grid;
+  grid-template-rows: auto auto;
+  align-content: start;
+  align-items: start;
   gap: 12px;
 }
 
 .arsenal-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
   gap: 10px;
 }
 
